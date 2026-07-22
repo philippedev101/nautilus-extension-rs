@@ -1,24 +1,31 @@
 [package]
 name = "nautilus-extension-sys"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2021"
+rust-version = "1.92"
 authors = ["Andrew Shu <talklittle@gmail.com>"]
-description = "FFI bindings to libnautilus-extension"
+description = "Raw FFI bindings to the Nautilus API 4 extension ABI used by Nautilus 43+"
+documentation = "https://docs.rs/nautilus-extension-sys"
+homepage = "https://github.com/talklittle/nautilus-extension-rs"
 repository = "https://github.com/talklittle/nautilus-extension-rs"
-keywords = ["nautilus", "bindings"]
+keywords = ["nautilus", "ffi", "gnome", "gtk4"]
 categories = ["external-ffi-bindings"]
-license = "GPL-3.0"
+license = "GPL-3.0-only"
 readme = "README.md"
+links = "nautilus-extension"
 
 [lib]
 name = "nautilus_extension_sys"
 
 [dependencies]
-gio-sys = "0.15.10"
-glib-sys = "0.15.10"
-gobject-sys = "0.15.10"
+gio-sys = "0.22"
+glib-sys = "0.22"
+gobject-sys = "0.22"
 libc = "0.2"
 
-[dependencies.gtk-sys]
-version = "0.15.3"
-features = ["v3_20"]
+[build-dependencies]
+pkg-config = "0.3"
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]
+targets = ["x86_64-unknown-linux-gnu"]

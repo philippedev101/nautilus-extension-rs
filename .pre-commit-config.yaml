@@ -1,0 +1,82 @@
+repos:
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt --check
+        entry: bash scripts/prek/cargo-quality.sh fmt
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: cargo-clippy
+        name: cargo clippy --all-targets
+        entry: bash scripts/prek/cargo-quality.sh clippy
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: cargo-test
+        name: cargo test --all-targets
+        entry: bash scripts/prek/cargo-quality.sh test
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: cargo-doctest
+        name: cargo test --doc
+        entry: bash scripts/prek/cargo-quality.sh doctest
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: nautilus-api-surface
+        name: Nautilus API surface coverage
+        entry: perl scripts/validation/check-api-surface.pl
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: project-docs
+        name: Project documentation coverage
+        entry: bash scripts/validation/check-docs.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: git-diff-check
+        name: git diff --check
+        entry: git diff --check
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: cargo-doc
+        name: cargo doc --no-deps
+        entry: bash scripts/prek/cargo-quality.sh doc
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: docs-rs
+        name: docs.rs documentation simulation
+        entry: bash scripts/validation/docs-rs.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: nautilus-example-symbols
+        name: Nautilus example cdylib symbols
+        entry: bash scripts/validation/check-example-symbols.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

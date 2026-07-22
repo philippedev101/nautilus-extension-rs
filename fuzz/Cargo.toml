@@ -1,0 +1,28 @@
+[package]
+name = "nautilus-extension-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+nautilus-extension = { path = "../nautilus-extension" }
+
+[[bin]]
+name = "wrapper_inputs"
+path = "fuzz_targets/wrapper_inputs.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "provider_outputs"
+path = "fuzz_targets/provider_outputs.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]

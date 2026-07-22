@@ -1,0 +1,87 @@
+name: Validation
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  fast:
+    name: Fast validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libglib2.0-dev zlib1g-dev
+      - name: Run fast validation
+        run: bash scripts/validation/all-fast.sh
+
+  native-ubuntu:
+    name: Native Nautilus validation / Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Install Nautilus development package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc pkg-config gobject-introspection libnautilus-extension-dev
+      - name: Run native strong validation
+        run: bash scripts/validation/native-strong.sh
+
+  package:
+    name: Package validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: List package contents
+        run: bash scripts/validation/package.sh --skip-publish-dry-run
+
+  semver:
+    name: Semver policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-semver-checks
+        run: cargo install cargo-semver-checks --locked
+      - name: Run semver policy check
+        run: bash scripts/validation/semver.sh
+
+  native-fedora:
+    name: Native Nautilus validation / Fedora
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - name: Install base dependencies
+        run: dnf install -y gcc git pkgconf-pkg-config rustup nautilus-devel gobject-introspection
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Run native strong validation
+        run: bash scripts/validation/native-strong.sh
+
+  native-arch:
+    name: Native Nautilus validation / Arch
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install base dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm base-devel git pkgconf rustup nautilus gobject-introspection
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Run native strong validation
+        run: bash scripts/validation/native-strong.sh

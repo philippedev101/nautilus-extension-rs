@@ -1,23 +1,44 @@
 [package]
 name = "nautilus-extension"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2021"
+rust-version = "1.92"
 authors = ["Andrew Shu <talklittle@gmail.com>"]
-description = "Safe Rust wrapper for libnautilus-extension, to extend GNOME Nautilus file browser (aka Files in Ubuntu)"
+description = "Safe-ish Rust wrappers for the Nautilus API 4 extension ABI used by Nautilus 43+"
+documentation = "https://docs.rs/nautilus-extension"
+homepage = "https://github.com/talklittle/nautilus-extension-rs"
 repository = "https://github.com/talklittle/nautilus-extension-rs"
-keywords = ["nautilus", "bindings", "gnome", "ubuntu"]
+keywords = ["nautilus", "extension", "gnome", "gtk4"]
 categories = ["api-bindings"]
-license = "GPL-3.0"
-readme = "../README.md"
+license = "GPL-3.0-only"
+readme = "README.md"
 
 [lib]
 name = "nautilus_extension"
 
+[[example]]
+name = "column_provider"
+path = "examples/column_provider.rs"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "menu_provider"
+path = "examples/menu_provider.rs"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "properties_model_provider"
+path = "examples/properties_model_provider.rs"
+crate-type = ["cdylib"]
+
 [dependencies]
-gio-sys = "0.15.10"
-glib-sys = "0.15.10"
-gobject-sys = "0.15.10"
-gtk-sys = "0.15.3"
+gio-sys = "0.22"
+glib-sys = "0.22"
+gobject-sys = "0.22"
 lazy_static = "1.4.0"
 libc = "0.2"
-nautilus-extension-sys = "0.8.0"
+nautilus-extension-sys = { path = "../nautilus-extension-sys", version = "0.9.0" }
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]
+targets = ["x86_64-unknown-linux-gnu"]

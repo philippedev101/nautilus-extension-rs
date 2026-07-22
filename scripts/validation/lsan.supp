@@ -1,0 +1,5 @@
+# Nautilus 50.1 leaks NautilusMenuItem objects appended to NautilusMenu.
+# A raw C probe that calls nautilus_menu_new(), nautilus_menu_item_new(),
+# nautilus_menu_append_item(), g_object_unref(item), and g_object_unref(menu)
+# reproduces this without Rust wrapper code.
+leak:nautilus_menu_item_new

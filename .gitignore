@@ -1,2 +1,6 @@
 target
 Cargo.lock
+.prek-cache
+/fuzz/artifacts/
+/fuzz/corpus/
+/fuzz/target/

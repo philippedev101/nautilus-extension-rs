@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0 (unreleased)
+
+* Ported the library to the Nautilus API 4 / GTK 4-era extension ABI used by
+  Nautilus 43 and newer.
+* Added wrappers for `PropertiesModelProvider`, model-backed properties items
+  and models, asynchronous `InfoProvider` completion, operation handles,
+  provider handles, and modern menu APIs.
+* Removed Nautilus 3 / GTK 3-only property page and location widget APIs from
+  the primary API surface.
+* Added neutral column, menu, and properties model examples that build as
+  `cdylib` extension modules for `extensions-4`.
+* Added validation scripts, fuzz/sanitizer smoke tests, docs.rs support,
+  API coverage tracking, and release documentation.
+
 ## 0.8.0 (2022-07-27)
 
 * Fixed Clippy lint errors and warnings.
