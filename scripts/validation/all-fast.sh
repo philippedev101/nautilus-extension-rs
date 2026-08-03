@@ -5,6 +5,7 @@ repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
 bash scripts/prek/cargo-quality.sh fmt
+bash scripts/validation/check-architecture.sh
 bash scripts/validation/check-docs.sh
 perl scripts/validation/check-api-surface.pl
 bash scripts/prek/cargo-quality.sh clippy

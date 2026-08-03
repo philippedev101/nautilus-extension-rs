@@ -7,6 +7,7 @@ cd "$repo_root"
 required_files=(
     docs/API_TRACKING.md
     docs/API_NAMING.md
+    docs/ARCHITECTURE.md
     docs/FFI_AUDIT.md
     docs/NAUTILUS_3_MIGRATION.md
     docs/RELEASE.md
