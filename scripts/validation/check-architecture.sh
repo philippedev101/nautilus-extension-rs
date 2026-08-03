@@ -34,8 +34,6 @@ done < <(
         -path './.git' -prune -o \
         -path './target' -prune -o \
         -path './fuzz/target' -prune -o \
-        -path './nautilus-extension' -prune -o \
-        -path './nautilus-extension-sys' -prune -o \
         -type d -print
 )
 
