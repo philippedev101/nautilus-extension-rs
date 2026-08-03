@@ -121,11 +121,19 @@ NAUTILUS_EXTENSION_RS_SKIP_NAUTILUS4_PKG_CONFIG=1 cargo test --all-targets
 
 That bypass is not suitable for building a loadable Nautilus extension.
 
+Maintainers should run the fast validation suite before commits that change API
+surface, FFI behavior, or project structure:
+
+```sh
+bash scripts/validation/all-fast.sh
+```
+
 Additional project maintenance docs:
 
 * [Nautilus 3 migration guide](docs/NAUTILUS_3_MIGRATION.md)
 * [Nautilus API 4 coverage tracking](docs/API_TRACKING.md)
 * [Public API naming audit](docs/API_NAMING.md)
+* [Architecture and project structure](docs/ARCHITECTURE.md)
 * [FFI panic and unsafe audit](docs/FFI_AUDIT.md)
 * [Versioning policy](docs/VERSIONING.md)
 * [Release checklist](docs/RELEASE.md)

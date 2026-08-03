@@ -18,6 +18,10 @@ safe wrapper crate because `nautilus-extension` depends on the matching
 bash scripts/validation/all-fast.sh
 ```
 
+This includes formatting, architecture shape checks, documentation metadata,
+API surface coverage, clippy, tests, doctests, docs, docs.rs simulation,
+example symbol checks, and whitespace validation.
+
 5. Run native validation on a machine or dev shell with Nautilus API 4 headers:
 
 ```sh
