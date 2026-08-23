@@ -31,8 +31,24 @@ grep -F '[package.metadata.docs.rs]' nautilus-extension-sys/Cargo.toml >/dev/nul
 grep -F 'readme = "README.md"' nautilus-extension/Cargo.toml >/dev/null
 grep -F 'readme = "README.md"' nautilus-extension-sys/Cargo.toml >/dev/null
 grep -F 'links = "nautilus-extension"' nautilus-extension-sys/Cargo.toml >/dev/null
-grep -F 'rust-version = "1.92"' nautilus-extension/Cargo.toml >/dev/null
-grep -F 'rust-version = "1.92"' nautilus-extension-sys/Cargo.toml >/dev/null
+# The MSRV is declared in two manifests and pinned in the CI job that proves it.
+# Derive it from one place and fail if the other two disagree.
+msrv="$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' nautilus-extension/Cargo.toml)"
+
+if [ -z "$msrv" ]; then
+    echo "docs: nautilus-extension/Cargo.toml does not declare rust-version" >&2
+    exit 1
+fi
+
+if ! grep -Fq "rust-version = \"$msrv\"" nautilus-extension-sys/Cargo.toml; then
+    echo "docs: nautilus-extension-sys declares a different rust-version than $msrv" >&2
+    exit 1
+fi
+
+if ! grep -Fq "dtolnay/rust-toolchain@$msrv" .github/workflows/validation.yml; then
+    echo "docs: no CI job pins the declared rust-version $msrv" >&2
+    exit 1
+fi
 grep -F 'DOCS_RS' nautilus-extension-sys/build.rs >/dev/null
 
 for example in column_provider menu_provider properties_model_provider; do
