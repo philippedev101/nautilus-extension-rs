@@ -303,3 +303,118 @@ pub(crate) unsafe trait GObjectProperties {
         unsafe { get_quark_property(object, property) }
     }
 }
+
+/// Safe access to a Nautilus object's C getters.
+///
+/// The object wrappers each hold a raw pointer and call getters through it, so
+/// without this every accessor would open its own `unsafe` block to restate the
+/// same invariant. Implementing this states it once; the methods below take the
+/// C getter as an argument and are safe to call.
+///
+/// # Safety
+///
+/// [`NautilusObject::as_raw`] must return either null or a pointer to a live
+/// object of type `Raw` that stays valid for the borrow of `self`. Null is
+/// allowed because the wrappers are constructible from raw pointers; the
+/// accessors below reject it rather than calling through it.
+pub(crate) unsafe trait NautilusObject {
+    /// The Nautilus C type this wrapper owns.
+    type Raw;
+
+    /// Returns the wrapped object as a raw pointer.
+    fn as_raw(&self) -> *mut Self::Raw;
+
+    /// Reads a getter that transfers ownership of a C string.
+    fn owned_string(
+        &self,
+        get: unsafe extern "C" fn(*mut Self::Raw) -> *mut c_char,
+    ) -> Option<String> {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return None;
+        }
+        unsafe { take_glib_string(get(raw)) }
+    }
+
+    /// Reads a getter that returns a C boolean.
+    fn flag(&self, get: unsafe extern "C" fn(*mut Self::Raw) -> gboolean) -> bool {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return false;
+        }
+        unsafe { get(raw) != GFALSE }
+    }
+
+    /// Reads a getter that returns a plain C value.
+    fn value<T: Default>(&self, get: unsafe extern "C" fn(*mut Self::Raw) -> T) -> T {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return T::default();
+        }
+        unsafe { get(raw) }
+    }
+
+    /// Reads a getter that returns a pointer, such as another GObject.
+    fn pointer<T>(&self, get: unsafe extern "C" fn(*mut Self::Raw) -> *mut T) -> *mut T {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return ptr::null_mut();
+        }
+        unsafe { get(raw) }
+    }
+
+    /// Calls a getter that takes one string argument and returns an owned string.
+    fn owned_string_for(
+        &self,
+        get: unsafe extern "C" fn(*mut Self::Raw, *const c_char) -> *mut c_char,
+        argument: &str,
+    ) -> Option<String> {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return None;
+        }
+        let argument = CString::new(argument).ok()?;
+        unsafe { take_glib_string(get(raw, argument.as_ptr())) }
+    }
+
+    /// Calls a predicate that takes one string argument.
+    fn flag_for(
+        &self,
+        get: unsafe extern "C" fn(*mut Self::Raw, *const c_char) -> gboolean,
+        argument: &str,
+    ) -> bool {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return false;
+        }
+        let Ok(argument) = CString::new(argument) else {
+            return false;
+        };
+        unsafe { get(raw, argument.as_ptr()) != GFALSE }
+    }
+
+    /// Calls a setter that takes one string argument.
+    fn call_with_string(
+        &self,
+        call: unsafe extern "C" fn(*mut Self::Raw, *const c_char),
+        argument: &str,
+    ) {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return;
+        }
+        let Ok(argument) = CString::new(argument) else {
+            return;
+        };
+        unsafe { call(raw, argument.as_ptr()) }
+    }
+
+    /// Calls a method that takes no arguments and returns nothing.
+    fn call(&self, call: unsafe extern "C" fn(*mut Self::Raw)) {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return;
+        }
+        unsafe { call(raw) }
+    }
+}

@@ -10,6 +10,7 @@ use crate::glib_ffi::{
 use crate::gobject_ffi::{
     g_closure_ref, g_closure_unref, g_object_ref, g_object_unref, GClosure, GObject,
 };
+use crate::gobject_utils::NautilusObject;
 use crate::nautilus_ffi::{
     nautilus_file_info_add_emblem, nautilus_file_info_add_string_attribute,
     nautilus_file_info_can_write, nautilus_file_info_create, nautilus_file_info_create_for_uri,

@@ -82,70 +82,52 @@ impl FileInfo {
 
     /// Returns whether Nautilus considers the file gone.
     pub fn is_gone(&self) -> bool {
-        unsafe { nautilus_file_info_is_gone(self.raw_file_info) != GFALSE }
+        self.flag(nautilus_file_info_is_gone)
     }
 
     /// Returns the display name for the file.
     pub fn name(&self) -> Option<String> {
-        unsafe { take_glib_string(nautilus_file_info_get_name(self.raw_file_info)) }
+        self.owned_string(nautilus_file_info_get_name)
     }
 
     /// Returns the file URI.
     pub fn uri(&self) -> Option<String> {
-        unsafe { take_glib_string(nautilus_file_info_get_uri(self.raw_file_info)) }
+        self.owned_string(nautilus_file_info_get_uri)
     }
 
     /// Returns the parent directory URI.
     pub fn parent_uri(&self) -> Option<String> {
-        unsafe { take_glib_string(nautilus_file_info_get_parent_uri(self.raw_file_info)) }
+        self.owned_string(nautilus_file_info_get_parent_uri)
     }
 
     /// Returns the URI scheme, such as `file` or `trash`.
     pub fn uri_scheme(&self) -> Option<String> {
-        unsafe { take_glib_string(nautilus_file_info_get_uri_scheme(self.raw_file_info)) }
+        self.owned_string(nautilus_file_info_get_uri_scheme)
     }
 
     /// Returns the MIME type known by Nautilus.
     pub fn mime_type(&self) -> Option<String> {
-        unsafe { take_glib_string(nautilus_file_info_get_mime_type(self.raw_file_info)) }
+        self.owned_string(nautilus_file_info_get_mime_type)
     }
 
     /// Returns whether the file matches `mime_type`.
     pub fn is_mime_type(&self, mime_type: &str) -> bool {
-        let mime_type = match CString::new(mime_type) {
-            Ok(mime_type) => mime_type,
-            Err(_) => return false,
-        };
-
-        unsafe { nautilus_file_info_is_mime_type(self.raw_file_info, mime_type.as_ptr()) != GFALSE }
+        self.flag_for(nautilus_file_info_is_mime_type, mime_type)
     }
 
     /// Returns whether the file is a directory.
     pub fn is_directory(&self) -> bool {
-        unsafe { nautilus_file_info_is_directory(self.raw_file_info) != GFALSE }
+        self.flag(nautilus_file_info_is_directory)
     }
 
     /// Adds an emblem by icon name.
     pub fn add_emblem(&self, emblem_name: &str) {
-        let emblem_name = match CString::new(emblem_name) {
-            Ok(emblem_name) => emblem_name,
-            Err(_) => return,
-        };
-
-        unsafe {
-            nautilus_file_info_add_emblem(self.raw_file_info, emblem_name.as_ptr());
-        }
+        self.call_with_string(nautilus_file_info_add_emblem, emblem_name)
     }
 
     /// Returns a string attribute previously known to Nautilus.
     pub fn string_attribute(&self, attribute_name: &str) -> Option<String> {
-        let attribute_name = CString::new(attribute_name).ok()?;
-        unsafe {
-            take_glib_string(nautilus_file_info_get_string_attribute(
-                self.raw_file_info,
-                attribute_name.as_ptr(),
-            ))
-        }
+        self.owned_string_for(nautilus_file_info_get_string_attribute, attribute_name)
     }
 
     /// Adds or updates a string attribute for this file.
@@ -175,24 +157,23 @@ impl FileInfo {
 
     /// Asks Nautilus to refresh extension-provided info for this file.
     pub fn invalidate_extension_info(&self) {
-        unsafe {
-            nautilus_file_info_invalidate_extension_info(self.raw_file_info);
-        }
+        self.call(nautilus_file_info_invalidate_extension_info)
     }
 
     /// Returns the activation URI Nautilus would open.
     pub fn activation_uri(&self) -> Option<String> {
-        unsafe { take_glib_string(nautilus_file_info_get_activation_uri(self.raw_file_info)) }
+        self.owned_string(nautilus_file_info_get_activation_uri)
     }
 
     /// Returns the Gio file type.
     pub fn file_type(&self) -> GFileType {
-        unsafe { nautilus_file_info_get_file_type(self.raw_file_info) }
+        self.value(nautilus_file_info_get_file_type)
     }
 
     /// Returns the Gio location object.
     pub fn location(&self) -> Option<OwnedGObject<GFile>> {
-        unsafe { OwnedGObject::from_raw_full(nautilus_file_info_get_location(self.raw_file_info)) }
+        // SAFETY: the getter returns a full-transfer GFile.
+        unsafe { OwnedGObject::from_raw_full(self.pointer(nautilus_file_info_get_location)) }
     }
 
     /// Returns the URI for the Gio location object.
@@ -209,24 +190,25 @@ impl FileInfo {
 
     /// Returns the Gio location of the parent directory.
     pub fn parent_location(&self) -> Option<OwnedGObject<GFile>> {
-        unsafe {
-            OwnedGObject::from_raw_full(nautilus_file_info_get_parent_location(self.raw_file_info))
-        }
+        // SAFETY: the getter returns a full-transfer GFile.
+        unsafe { OwnedGObject::from_raw_full(self.pointer(nautilus_file_info_get_parent_location)) }
     }
 
     /// Returns the parent directory's file info.
     pub fn parent_info(&self) -> Option<FileInfo> {
-        unsafe { FileInfo::from_raw_full(nautilus_file_info_get_parent_info(self.raw_file_info)) }
+        // SAFETY: the getter returns a full-transfer NautilusFileInfo.
+        unsafe { FileInfo::from_raw_full(self.pointer(nautilus_file_info_get_parent_info)) }
     }
 
     /// Returns the mount that contains this file.
     pub fn mount(&self) -> Option<OwnedGObject<GMount>> {
-        unsafe { OwnedGObject::from_raw_full(nautilus_file_info_get_mount(self.raw_file_info)) }
+        // SAFETY: the getter returns a full-transfer GMount.
+        unsafe { OwnedGObject::from_raw_full(self.pointer(nautilus_file_info_get_mount)) }
     }
 
     /// Returns whether the current user can write to the file.
     pub fn can_write(&self) -> bool {
-        unsafe { nautilus_file_info_can_write(self.raw_file_info) != GFALSE }
+        self.flag(nautilus_file_info_can_write)
     }
 
     /// Returns the file URI or an empty string if it is unavailable.
@@ -330,6 +312,16 @@ impl Drop for FileInfoList {
                 nautilus_file_info_list_free(self.raw);
             }
         }
+    }
+}
+
+// SAFETY: `raw_file_info` is null or a `NautilusFileInfo` this wrapper owns a
+// reference to, so it stays live for as long as the wrapper is borrowed.
+unsafe impl NautilusObject for FileInfo {
+    type Raw = NautilusFileInfo;
+
+    fn as_raw(&self) -> *mut NautilusFileInfo {
+        self.raw_file_info
     }
 }
 
