@@ -317,7 +317,8 @@ impl UpdateCompleteCallback {
             return None;
         }
 
-        // SAFETY: the wrapper holds a live reference to this closure.
+        // SAFETY: the caller guarantees `raw` is a live closure, and null was rejected
+        // just above. This takes the reference the returned wrapper owns.
         unsafe {
             g_closure_ref(raw);
         }

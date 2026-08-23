@@ -166,8 +166,8 @@ pub(crate) fn connect_activate_signal(
     });
 
     let activate_data = Box::into_raw(activate_data);
-    // SAFETY: the instance is the live object this wrapper owns, and the payload is paired
-    // with the destroy notify that frees it.
+    // SAFETY: `raw_menuitem` is the live menu item the caller just created, and the boxed
+    // payload is paired with the destroy notify that frees it.
     let signal_id = unsafe {
         g_signal_connect_data(
             raw_menuitem as *mut GObject,

@@ -348,8 +348,11 @@ pub(crate) fn schedule_completion_source(source_data: CompletionSource) -> bool 
 
     let source_data = Box::into_raw(Box::new(source_data));
 
-    // SAFETY: the source was created here and is configured before anything else can
-    // observe it.
+    // SAFETY: `source` is the idle source created above and is configured before it is
+    // attached, so nothing can observe it half-set-up. `g_source_set_callback` takes
+    // ownership of `source_data`, freeing it through `destroy_completion_source`.
+    // `g_source_attach` takes the context's own reference on the source, so the two
+    // unrefs release the references this function holds, not the attached ones.
     unsafe {
         g_source_set_priority(source, G_PRIORITY_DEFAULT);
         g_source_set_callback(
@@ -463,7 +466,8 @@ pub(crate) fn new_operation(
     // SAFETY: Nautilus owns this pointer for the duration of the call, and
     // `from_raw_borrowed` rejects null and takes its own reference.
     let file_info = unsafe { FileInfo::from_raw_borrowed(file)? };
-    // SAFETY: the wrapper holds a live reference to this closure.
+    // SAFETY: `update_complete` is the closure Nautilus supplied for this operation and
+    // is non-null here. This takes the reference the state owns until `cleanup_state`.
     let closure = unsafe { g_closure_ref(update_complete) };
     let state = Arc::new(OperationState::new(provider, file, closure));
     let raw_handle = Arc::into_raw(state.clone()) as *mut NautilusOperationHandle;
