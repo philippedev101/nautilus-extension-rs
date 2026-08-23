@@ -41,16 +41,9 @@ pub struct PropertiesModelProviderHandle {
 }
 
 impl PropertiesModelProviderHandle {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusPropertiesModelProvider` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_properties_model_provider_get_type() }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusPropertiesModelProvider` GType.
-    pub fn type_() -> GType {
-        0
     }
 
     /// # Safety
@@ -103,7 +96,6 @@ impl PropertiesModelProviderHandle {
         raw
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Calls the provider interface and returns native model objects.
     pub fn get_models(&self, files: &[FileInfo]) -> Vec<PropertiesModelObject> {
         let mut raw_files: *mut GList = ptr::null_mut();
@@ -130,12 +122,6 @@ impl PropertiesModelProviderHandle {
         }
 
         vec
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Calls the provider interface and returns native model objects.
-    pub fn get_models(&self, _files: &[FileInfo]) -> Vec<PropertiesModelObject> {
-        Vec::new()
     }
 
     /// Calls the provider interface and returns native model objects.

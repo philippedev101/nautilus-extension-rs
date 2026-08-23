@@ -121,6 +121,12 @@ NAUTILUS_EXTENSION_RS_SKIP_NAUTILUS4_PKG_CONFIG=1 cargo test --all-targets
 
 That bypass is not suitable for building a loadable Nautilus extension.
 
+The wrapper source stays single-path across both builds: the stub definitions
+live next to the `extern "C"` declarations in `nautilus-extension-sys`, and the
+public `NATIVE_API_AVAILABLE` constant reports which build this is for the few
+places whose result would otherwise be misleading, such as GObject type
+registration.
+
 Maintainers should run the fast validation suite before commits that change API
 surface, FFI behavior, or project structure:
 

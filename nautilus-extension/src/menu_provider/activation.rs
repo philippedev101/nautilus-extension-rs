@@ -38,13 +38,10 @@ pub enum MenuActivationTarget {
     Background(FileInfo),
 }
 
-#[cfg(any(test, not(nautilus_extension_rs_skip_link)))]
-#[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
 pub(crate) struct MenuProviderItemsUpdatedData {
     pub(crate) callback: Box<dyn Fn(&MenuProviderHandle)>,
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) unsafe extern "C" fn menu_provider_items_updated_trampoline(
     provider: *mut NautilusMenuProvider,
     user_data: gpointer,
@@ -61,7 +58,6 @@ pub(crate) unsafe extern "C" fn menu_provider_items_updated_trampoline(
     }));
 }
 
-#[cfg(any(test, not(nautilus_extension_rs_skip_link)))]
 pub(crate) unsafe extern "C" fn destroy_menu_provider_items_updated_data(
     user_data: gpointer,
     _closure: *mut GClosure,
@@ -73,13 +69,10 @@ pub(crate) unsafe extern "C" fn destroy_menu_provider_items_updated_data(
     }
 }
 
-#[cfg(any(test, not(nautilus_extension_rs_skip_link)))]
-#[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
 pub(crate) struct MenuItemObjectActivateData {
     pub(crate) callback: Box<dyn Fn(&MenuItemObject)>,
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) unsafe extern "C" fn menu_item_object_activate_trampoline(
     item: *mut NautilusMenuItem,
     user_data: gpointer,
@@ -96,7 +89,6 @@ pub(crate) unsafe extern "C" fn menu_item_object_activate_trampoline(
     }));
 }
 
-#[cfg(any(test, not(nautilus_extension_rs_skip_link)))]
 pub(crate) unsafe extern "C" fn destroy_menu_item_object_activate_data(
     user_data: gpointer,
     _closure: *mut GClosure,
@@ -108,14 +100,11 @@ pub(crate) unsafe extern "C" fn destroy_menu_item_object_activate_data(
     }
 }
 
-#[cfg(any(test, not(nautilus_extension_rs_skip_link)))]
-#[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
 pub(crate) struct ActivateData {
     pub(crate) activate_fn: Arc<dyn Fn(MenuActivation)>,
     pub(crate) target: MenuActivationTarget,
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) unsafe extern "C" fn menu_item_activate_trampoline(
     _item: *mut NautilusMenuItem,
     user_data: gpointer,
@@ -134,7 +123,6 @@ pub(crate) unsafe extern "C" fn menu_item_activate_trampoline(
     }));
 }
 
-#[cfg(any(test, not(nautilus_extension_rs_skip_link)))]
 pub(crate) unsafe extern "C" fn destroy_activate_data(
     user_data: gpointer,
     _closure: *mut GClosure,
@@ -146,7 +134,6 @@ pub(crate) unsafe extern "C" fn destroy_activate_data(
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) fn connect_activate_signal(
     raw_menuitem: *mut NautilusMenuItem,
     activate_fn: Arc<dyn Fn(MenuActivation)>,

@@ -33,7 +33,6 @@ grep -F 'readme = "README.md"' nautilus-extension-sys/Cargo.toml >/dev/null
 grep -F 'links = "nautilus-extension"' nautilus-extension-sys/Cargo.toml >/dev/null
 grep -F 'rust-version = "1.92"' nautilus-extension/Cargo.toml >/dev/null
 grep -F 'rust-version = "1.92"' nautilus-extension-sys/Cargo.toml >/dev/null
-grep -F 'DOCS_RS' nautilus-extension/build.rs >/dev/null
 grep -F 'DOCS_RS' nautilus-extension-sys/build.rs >/dev/null
 
 for example in column_provider menu_provider properties_model_provider; do

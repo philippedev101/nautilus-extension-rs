@@ -7,19 +7,11 @@ pub struct MenuItemObject {
 }
 
 impl MenuItemObject {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusMenuItem` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_menu_item_get_type() }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusMenuItem` GType.
-    pub fn type_() -> GType {
-        0
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Creates a native menu item.
     pub fn new<N, L>(name: N, label: L) -> Option<MenuItemObject>
     where
@@ -32,17 +24,6 @@ impl MenuItemObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Creates a native menu item.
-    pub fn new<N, L>(_name: N, _label: L) -> Option<MenuItemObject>
-    where
-        N: AsRef<str>,
-        L: AsRef<str>,
-    {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     #[deprecated(
         note = "Nautilus API 4.1 deprecates tip/icon constructor arguments; use new() for modern extensions"
     )]
@@ -75,27 +56,6 @@ impl MenuItemObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    #[deprecated(
-        note = "Nautilus API 4.1 deprecates tip/icon constructor arguments; use new() for modern extensions"
-    )]
-    /// Creates a native menu item with deprecated tip and icon fields.
-    pub fn new_full<N, L, T, I>(
-        _name: N,
-        _label: L,
-        _tip: Option<T>,
-        _icon: Option<I>,
-    ) -> Option<MenuItemObject>
-    where
-        N: AsRef<str>,
-        L: AsRef<str>,
-        T: AsRef<str>,
-        I: AsRef<str>,
-    {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Creates a native menu item using a custom item subtype.
     pub fn new_for_type<N, L>(item_type: MenuItemType, name: N, label: L) -> Option<MenuItemObject>
     where
@@ -108,21 +68,6 @@ impl MenuItemObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Creates a native menu item using a custom item subtype.
-    pub fn new_for_type<N, L>(
-        _item_type: MenuItemType,
-        _name: N,
-        _label: L,
-    ) -> Option<MenuItemObject>
-    where
-        N: AsRef<str>,
-        L: AsRef<str>,
-    {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     #[deprecated(
         note = "Nautilus API 4.1 deprecates tip/icon constructor arguments; use new_for_type() for modern extensions"
     )]
@@ -154,27 +99,6 @@ impl MenuItemObject {
                 icon.as_ref(),
             )?)
         }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    #[deprecated(
-        note = "Nautilus API 4.1 deprecates tip/icon constructor arguments; use new_for_type() for modern extensions"
-    )]
-    /// Creates a custom-subtype menu item with deprecated tip and icon fields.
-    pub fn new_full_for_type<N, L, T, I>(
-        _item_type: MenuItemType,
-        _name: N,
-        _label: L,
-        _tip: Option<T>,
-        _icon: Option<I>,
-    ) -> Option<MenuItemObject>
-    where
-        N: AsRef<str>,
-        L: AsRef<str>,
-        T: AsRef<str>,
-        I: AsRef<str>,
-    {
-        None
     }
 
     /// # Safety
@@ -222,7 +146,6 @@ impl MenuItemObject {
         raw
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Activates this native menu item.
     pub fn activate(&self) {
         unsafe {
@@ -230,11 +153,6 @@ impl MenuItemObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Activates this native menu item.
-    pub fn activate(&self) {}
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Connects a callback to this item object's `activate` signal.
     pub fn connect_activate<F>(&self, callback: F) -> Option<SignalHandlerId>
     where
@@ -270,16 +188,6 @@ impl MenuItemObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Connects a callback to this item object's `activate` signal.
-    pub fn connect_activate<F>(&self, _callback: F) -> Option<SignalHandlerId>
-    where
-        F: Fn(&MenuItemObject) + 'static,
-    {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Disconnects a signal handler previously connected on this item.
     pub fn disconnect_signal(&self, signal_id: SignalHandlerId) {
         unsafe {
@@ -287,11 +195,6 @@ impl MenuItemObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Disconnects a signal handler previously connected on this item.
-    pub fn disconnect_signal(&self, _signal_id: SignalHandlerId) {}
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Attaches a submenu to this menu item.
     pub fn set_submenu(&self, submenu: &MenuObject) {
         unsafe {
@@ -299,42 +202,27 @@ impl MenuItemObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Attaches a submenu to this menu item.
-    pub fn set_submenu(&self, _submenu: &MenuObject) {}
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Attaches `submenu` when present.
     ///
     /// Returns `false` for `None` because Nautilus API 4 does not expose a
     /// documented clear-submenu call.
     pub fn set_optional_submenu(&self, submenu: Option<&MenuObject>) -> bool {
-        match submenu {
-            Some(submenu) => {
-                self.set_submenu(submenu);
-                true
-            }
-            None => false,
+        let Some(submenu) = submenu else {
+            return false;
+        };
+
+        if !NATIVE_API_AVAILABLE {
+            return false;
         }
+
+        self.set_submenu(submenu);
+        true
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Attaches `submenu` when present.
-    pub fn set_optional_submenu(&self, _submenu: Option<&MenuObject>) -> bool {
-        false
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Attempts to clear the submenu.
     ///
     /// This returns `false` because Nautilus API 4 does not expose a documented
     /// clear-submenu call.
-    pub fn clear_submenu(&self) -> bool {
-        false
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Attempts to clear the submenu.
     pub fn clear_submenu(&self) -> bool {
         false
     }

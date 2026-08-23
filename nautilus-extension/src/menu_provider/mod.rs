@@ -1,37 +1,26 @@
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::glib_ffi::g_list_free;
-use crate::glib_ffi::{g_list_append, gpointer, gulong, GList, GType};
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::gobject_ffi::g_object_new;
-#[cfg(any(test, not(nautilus_extension_rs_skip_link)))]
-use crate::gobject_ffi::GClosure;
-use crate::gobject_ffi::{g_object_ref, g_object_unref, GObject};
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::gobject_ffi::{g_signal_connect_data, g_signal_handler_disconnect};
+use crate::glib_ffi::{g_list_append, g_list_free, gpointer, gulong, GList, GType};
+use crate::gobject_ffi::{
+    g_object_new, g_object_ref, g_object_unref, g_signal_connect_data, g_signal_handler_disconnect,
+    GClosure, GObject,
+};
 use crate::gobject_utils::{
     get_bool_property, get_object_property, get_string_property, set_bool_property,
     set_optional_string_property, set_string_property,
 };
 use crate::info_provider::FileInfo;
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use crate::nautilus_ffi::{
     nautilus_menu_append_item, nautilus_menu_get_items, nautilus_menu_get_type,
     nautilus_menu_item_activate, nautilus_menu_item_get_type, nautilus_menu_item_list_free,
     nautilus_menu_item_new, nautilus_menu_item_set_submenu, nautilus_menu_new,
     nautilus_menu_provider_emit_items_updated_signal, nautilus_menu_provider_get_background_items,
-    nautilus_menu_provider_get_file_items, nautilus_menu_provider_get_type,
-};
-use crate::nautilus_ffi::{
-    NautilusFileInfo, NautilusMenu, NautilusMenuItem, NautilusMenuItemClass, NautilusMenuProvider,
-    NautilusMenuProviderIface,
+    nautilus_menu_provider_get_file_items, nautilus_menu_provider_get_type, NautilusFileInfo,
+    NautilusMenu, NautilusMenuItem, NautilusMenuItemClass, NautilusMenuProvider,
+    NautilusMenuProviderIface, NATIVE_API_AVAILABLE,
 };
 use crate::slot_allocator::{release_slot, reset_slots, take_next_slot};
 use crate::translate::{file_info_vec_from_g_list, vec_from_g_list};
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use libc::c_char;
-use libc::c_void;
+use libc::{c_char, c_void};
 use std::borrow::Cow;
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use std::ffi::CString;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;

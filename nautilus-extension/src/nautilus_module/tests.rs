@@ -1,4 +1,5 @@
 use super::*;
+use crate::test_support::require_unlinked_build;
 use crate::{
     Column, ColumnProvider, FileInfo, FileInfoImpl, InfoProvider, MenuItem, MenuItemObject,
     MenuProvider, PropertiesModel, PropertiesModelProvider,
@@ -159,9 +160,10 @@ fn menu_item_type_registration_rejects_invalid_type_names_before_reserving_slot(
     crate::menu_provider::reset_menu_item_activate_state();
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn menu_item_type_registration_reports_unavailable_native_api_in_no_link_mode() {
+    require_unlinked_build!();
+
     let _guard = crate::test_support::PROVIDER_STATE_LOCK
         .lock()
         .expect("provider-state test lock poisoned");
@@ -184,9 +186,10 @@ fn menu_item_type_registration_reports_unavailable_native_api_in_no_link_mode() 
     crate::menu_provider::reset_menu_item_activate_state();
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn register_is_inert_and_releases_slots_in_no_link_mode() {
+    require_unlinked_build!();
+
     let _guard = crate::test_support::PROVIDER_STATE_LOCK
         .lock()
         .expect("provider-state test lock poisoned");

@@ -118,6 +118,14 @@ extern crate lazy_static;
 pub extern crate libc;
 pub extern crate nautilus_extension_sys as nautilus_ffi;
 
+/// Whether this build links against the native Nautilus extension library.
+///
+/// This is `false` only when the library was unavailable at build time, such
+/// as on docs.rs, in which case every Nautilus call is a stub that returns a
+/// neutral value and the provider registration entry points report
+/// [`NautilusModuleError::NativeApiUnavailable`].
+pub use crate::nautilus_ffi::NATIVE_API_AVAILABLE;
+
 pub use crate::column_provider::{
     Column, ColumnObject, ColumnProvider, ColumnProviderHandle, ColumnSortOrder,
 };
@@ -299,6 +307,33 @@ pub(crate) mod test_support {
     use std::ptr;
 
     pub static PROVIDER_STATE_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    /// Ends the calling test early unless this build links against Nautilus.
+    ///
+    /// Tests that drive real `NautilusColumn`, `NautilusMenu`, or
+    /// `NautilusPropertiesModel` objects cannot run when the native library
+    /// is missing, because every constructor is then a stub returning null.
+    macro_rules! require_native_api {
+        () => {
+            if !$crate::NATIVE_API_AVAILABLE {
+                return;
+            }
+        };
+    }
+
+    /// Ends the calling test early unless this build is missing Nautilus.
+    ///
+    /// The counterpart of [`require_native_api!`], for the tests that pin how
+    /// the wrappers behave once every Nautilus call is an inert stub.
+    macro_rules! require_unlinked_build {
+        () => {
+            if $crate::NATIVE_API_AVAILABLE {
+                return;
+            }
+        };
+    }
+
+    pub(crate) use {require_native_api, require_unlinked_build};
 
     fn panicking_register(_module: *mut GTypeModule) -> GType {
         panic!("module registration panic");

@@ -79,6 +79,7 @@ The safe registration layer exposes:
 - `NautilusModuleError`
 - `IntoModuleTypes`
 - `nautilus_module`
+- `NATIVE_API_AVAILABLE`
 
 The generated trampoline slots currently cover:
 

@@ -9,6 +9,18 @@
 //! pointers and C ownership rules. Most extension authors should use the safe
 //! wrappers in the `nautilus-extension` crate instead.
 
+mod unlinked;
+
+use crate::unlinked::nautilus_api;
+
+/// Whether this build links against the native Nautilus extension library.
+///
+/// This is `false` only when the library was unavailable at build time, such
+/// as on docs.rs. Every function below is then a stub that returns a neutral
+/// value, so callers that must behave differently should branch on this
+/// constant at run time.
+pub const NATIVE_API_AVAILABLE: bool = cfg!(not(nautilus_extension_rs_skip_link));
+
 extern crate gio_sys as gio_ffi;
 extern crate glib_sys as glib_ffi;
 extern crate gobject_sys as gobject_ffi;
@@ -205,111 +217,107 @@ pub enum NautilusOperationResult {
     NautilusOperationInProgress = 2,
 }
 
-#[cfg_attr(
-    not(nautilus_extension_rs_skip_link),
-    link(name = "nautilus-extension")
-)]
-extern "C" {
+nautilus_api! {
     /// Returns the GType for `NautilusOperationResult`.
-    pub fn nautilus_operation_result_get_type() -> GType;
+    fn nautilus_operation_result_get_type() -> GType;
 
     /// Returns the GType for `NautilusColumn`.
-    pub fn nautilus_column_get_type() -> GType;
+    fn nautilus_column_get_type() -> GType;
     /// Creates a new `NautilusColumn`.
-    pub fn nautilus_column_new(
+    fn nautilus_column_new(
         name: *const c_char,
         attribute: *const c_char,
         label: *const c_char,
         description: *const c_char,
     ) -> *mut NautilusColumn;
     /// Returns the GType for `NautilusColumnProvider`.
-    pub fn nautilus_column_provider_get_type() -> GType;
+    fn nautilus_column_provider_get_type() -> GType;
     /// Calls a column provider's `get_columns` interface method.
-    pub fn nautilus_column_provider_get_columns(
+    fn nautilus_column_provider_get_columns(
         provider: *mut NautilusColumnProvider,
     ) -> *mut GList;
 
     /// Returns the GType for `NautilusFileInfo`.
-    pub fn nautilus_file_info_get_type() -> GType;
+    fn nautilus_file_info_get_type() -> GType;
     /// Creates file info for a Gio file location.
-    pub fn nautilus_file_info_create(location: *mut GFile) -> *mut NautilusFileInfo;
+    fn nautilus_file_info_create(location: *mut GFile) -> *mut NautilusFileInfo;
     /// Creates file info for a URI.
-    pub fn nautilus_file_info_create_for_uri(uri: *const c_char) -> *mut NautilusFileInfo;
+    fn nautilus_file_info_create_for_uri(uri: *const c_char) -> *mut NautilusFileInfo;
     /// Looks up file info for a Gio file location.
-    pub fn nautilus_file_info_lookup(location: *mut GFile) -> *mut NautilusFileInfo;
+    fn nautilus_file_info_lookup(location: *mut GFile) -> *mut NautilusFileInfo;
     /// Looks up file info for a URI.
-    pub fn nautilus_file_info_lookup_for_uri(uri: *const c_char) -> *mut NautilusFileInfo;
+    fn nautilus_file_info_lookup_for_uri(uri: *const c_char) -> *mut NautilusFileInfo;
     /// Copies a `GList` of `NautilusFileInfo` objects.
-    pub fn nautilus_file_info_list_copy(files: *mut GList) -> *mut GList;
+    fn nautilus_file_info_list_copy(files: *mut GList) -> *mut GList;
     /// Frees a `GList` of `NautilusFileInfo` objects.
-    pub fn nautilus_file_info_list_free(files: *mut GList);
+    fn nautilus_file_info_list_free(files: *mut GList);
     /// Adds an emblem by icon name.
-    pub fn nautilus_file_info_add_emblem(file: *mut NautilusFileInfo, emblem_name: *const c_char);
+    fn nautilus_file_info_add_emblem(file: *mut NautilusFileInfo, emblem_name: *const c_char);
     /// Adds or updates a string attribute.
-    pub fn nautilus_file_info_add_string_attribute(
+    fn nautilus_file_info_add_string_attribute(
         file: *mut NautilusFileInfo,
         attribute_name: *const c_char,
         value: *const c_char,
     );
     /// Returns whether the file is writable.
-    pub fn nautilus_file_info_can_write(file_info: *mut NautilusFileInfo) -> gboolean;
+    fn nautilus_file_info_can_write(file_info: *mut NautilusFileInfo) -> gboolean;
     /// Returns the activation URI.
-    pub fn nautilus_file_info_get_activation_uri(file_info: *mut NautilusFileInfo) -> *mut c_char;
+    fn nautilus_file_info_get_activation_uri(file_info: *mut NautilusFileInfo) -> *mut c_char;
     /// Returns the Gio file type.
-    pub fn nautilus_file_info_get_file_type(file_info: *mut NautilusFileInfo) -> GFileType;
+    fn nautilus_file_info_get_file_type(file_info: *mut NautilusFileInfo) -> GFileType;
     /// Returns the Gio location.
-    pub fn nautilus_file_info_get_location(file_info: *mut NautilusFileInfo) -> *mut GFile;
+    fn nautilus_file_info_get_location(file_info: *mut NautilusFileInfo) -> *mut GFile;
     /// Returns the MIME type.
-    pub fn nautilus_file_info_get_mime_type(file_info: *mut NautilusFileInfo) -> *mut c_char;
+    fn nautilus_file_info_get_mime_type(file_info: *mut NautilusFileInfo) -> *mut c_char;
     /// Returns the containing mount.
-    pub fn nautilus_file_info_get_mount(file_info: *mut NautilusFileInfo) -> *mut GMount;
+    fn nautilus_file_info_get_mount(file_info: *mut NautilusFileInfo) -> *mut GMount;
     /// Returns the file display name.
-    pub fn nautilus_file_info_get_name(file_info: *mut NautilusFileInfo) -> *mut c_char;
+    fn nautilus_file_info_get_name(file_info: *mut NautilusFileInfo) -> *mut c_char;
     /// Returns the parent file info.
-    pub fn nautilus_file_info_get_parent_info(
+    fn nautilus_file_info_get_parent_info(
         file_info: *mut NautilusFileInfo,
     ) -> *mut NautilusFileInfo;
     /// Returns the parent Gio location.
-    pub fn nautilus_file_info_get_parent_location(file_info: *mut NautilusFileInfo) -> *mut GFile;
+    fn nautilus_file_info_get_parent_location(file_info: *mut NautilusFileInfo) -> *mut GFile;
     /// Returns the parent URI.
-    pub fn nautilus_file_info_get_parent_uri(file_info: *mut NautilusFileInfo) -> *mut c_char;
+    fn nautilus_file_info_get_parent_uri(file_info: *mut NautilusFileInfo) -> *mut c_char;
     /// Returns a string attribute.
-    pub fn nautilus_file_info_get_string_attribute(
+    fn nautilus_file_info_get_string_attribute(
         file_info: *mut NautilusFileInfo,
         attribute_name: *const c_char,
     ) -> *mut c_char;
     /// Returns the file URI.
-    pub fn nautilus_file_info_get_uri(file_info: *mut NautilusFileInfo) -> *mut c_char;
+    fn nautilus_file_info_get_uri(file_info: *mut NautilusFileInfo) -> *mut c_char;
     /// Returns the URI scheme.
-    pub fn nautilus_file_info_get_uri_scheme(file_info: *mut NautilusFileInfo) -> *mut c_char;
+    fn nautilus_file_info_get_uri_scheme(file_info: *mut NautilusFileInfo) -> *mut c_char;
     /// Invalidates extension-provided information.
-    pub fn nautilus_file_info_invalidate_extension_info(file: *mut NautilusFileInfo);
+    fn nautilus_file_info_invalidate_extension_info(file: *mut NautilusFileInfo);
     /// Returns whether the file is a directory.
-    pub fn nautilus_file_info_is_directory(file_info: *mut NautilusFileInfo) -> gboolean;
+    fn nautilus_file_info_is_directory(file_info: *mut NautilusFileInfo) -> gboolean;
     /// Returns whether the file is gone.
-    pub fn nautilus_file_info_is_gone(file_info: *mut NautilusFileInfo) -> gboolean;
+    fn nautilus_file_info_is_gone(file_info: *mut NautilusFileInfo) -> gboolean;
     /// Returns whether the file matches a MIME type.
-    pub fn nautilus_file_info_is_mime_type(
+    fn nautilus_file_info_is_mime_type(
         file_info: *mut NautilusFileInfo,
         mime_type: *const c_char,
     ) -> gboolean;
 
     /// Returns the GType for `NautilusInfoProvider`.
-    pub fn nautilus_info_provider_get_type() -> GType;
+    fn nautilus_info_provider_get_type() -> GType;
     /// Calls an info provider's update method.
-    pub fn nautilus_info_provider_update_file_info(
+    fn nautilus_info_provider_update_file_info(
         provider: *mut NautilusInfoProvider,
         file: *mut NautilusFileInfo,
         update_complete: *mut GClosure,
         handle: *mut *mut NautilusOperationHandle,
     ) -> NautilusOperationResult;
     /// Calls an info provider's cancel method.
-    pub fn nautilus_info_provider_cancel_update(
+    fn nautilus_info_provider_cancel_update(
         provider: *mut NautilusInfoProvider,
         handle: *mut NautilusOperationHandle,
     );
     /// Invokes Nautilus' update-complete callback.
-    pub fn nautilus_info_provider_update_complete_invoke(
+    fn nautilus_info_provider_update_complete_invoke(
         update_complete: *mut GClosure,
         provider: *mut NautilusInfoProvider,
         handle: *mut NautilusOperationHandle,
@@ -317,78 +325,78 @@ extern "C" {
     );
 
     /// Returns the GType for `NautilusMenu`.
-    pub fn nautilus_menu_get_type() -> GType;
+    fn nautilus_menu_get_type() -> GType;
     /// Appends a menu item to a menu.
-    pub fn nautilus_menu_append_item(menu: *mut NautilusMenu, item: *mut NautilusMenuItem);
+    fn nautilus_menu_append_item(menu: *mut NautilusMenu, item: *mut NautilusMenuItem);
     /// Returns the items in a menu.
-    pub fn nautilus_menu_get_items(menu: *mut NautilusMenu) -> *mut GList;
+    fn nautilus_menu_get_items(menu: *mut NautilusMenu) -> *mut GList;
     /// Creates a new menu.
-    pub fn nautilus_menu_new() -> *mut NautilusMenu;
+    fn nautilus_menu_new() -> *mut NautilusMenu;
     /// Returns the GType for `NautilusMenuItem`.
-    pub fn nautilus_menu_item_get_type() -> GType;
+    fn nautilus_menu_item_get_type() -> GType;
     /// Frees a `GList` of `NautilusMenuItem` objects.
-    pub fn nautilus_menu_item_list_free(item_list: *mut GList);
+    fn nautilus_menu_item_list_free(item_list: *mut GList);
     /// Creates a new menu item.
-    pub fn nautilus_menu_item_new(
+    fn nautilus_menu_item_new(
         name: *const c_char,
         label: *const c_char,
         tip: *const c_char,
         icon: *const c_char,
     ) -> *mut NautilusMenuItem;
     /// Activates a menu item.
-    pub fn nautilus_menu_item_activate(item: *mut NautilusMenuItem);
+    fn nautilus_menu_item_activate(item: *mut NautilusMenuItem);
     /// Attaches a submenu to a menu item.
-    pub fn nautilus_menu_item_set_submenu(item: *mut NautilusMenuItem, menu: *mut NautilusMenu);
+    fn nautilus_menu_item_set_submenu(item: *mut NautilusMenuItem, menu: *mut NautilusMenu);
     /// Emits the menu provider's `items-updated` signal.
-    pub fn nautilus_menu_provider_emit_items_updated_signal(provider: *mut NautilusMenuProvider);
+    fn nautilus_menu_provider_emit_items_updated_signal(provider: *mut NautilusMenuProvider);
     /// Returns the GType for `NautilusMenuProvider`.
-    pub fn nautilus_menu_provider_get_type() -> GType;
+    fn nautilus_menu_provider_get_type() -> GType;
     /// Calls a menu provider's selected-file item method.
-    pub fn nautilus_menu_provider_get_file_items(
+    fn nautilus_menu_provider_get_file_items(
         provider: *mut NautilusMenuProvider,
         files: *mut GList,
     ) -> *mut GList;
     /// Calls a menu provider's background item method.
-    pub fn nautilus_menu_provider_get_background_items(
+    fn nautilus_menu_provider_get_background_items(
         provider: *mut NautilusMenuProvider,
         current_folder: *mut NautilusFileInfo,
     ) -> *mut GList;
 
     /// Returns the GType for `NautilusPropertiesItem`.
-    pub fn nautilus_properties_item_get_type() -> GType;
+    fn nautilus_properties_item_get_type() -> GType;
     /// Creates a new properties item.
-    pub fn nautilus_properties_item_new(
+    fn nautilus_properties_item_new(
         name: *const c_char,
         value: *const c_char,
     ) -> *mut NautilusPropertiesItem;
     /// Returns a properties item's name.
-    pub fn nautilus_properties_item_get_name(item: *mut NautilusPropertiesItem) -> *const c_char;
+    fn nautilus_properties_item_get_name(item: *mut NautilusPropertiesItem) -> *const c_char;
     /// Returns a properties item's value.
-    pub fn nautilus_properties_item_get_value(item: *mut NautilusPropertiesItem) -> *const c_char;
+    fn nautilus_properties_item_get_value(item: *mut NautilusPropertiesItem) -> *const c_char;
     /// Returns the GType for `NautilusPropertiesModel`.
-    pub fn nautilus_properties_model_get_type() -> GType;
+    fn nautilus_properties_model_get_type() -> GType;
     /// Creates a new properties model.
-    pub fn nautilus_properties_model_new(
+    fn nautilus_properties_model_new(
         title: *const c_char,
         model: *mut GListModel,
     ) -> *mut NautilusPropertiesModel;
     /// Returns the underlying list model.
-    pub fn nautilus_properties_model_get_model(
+    fn nautilus_properties_model_get_model(
         model: *mut NautilusPropertiesModel,
     ) -> *mut GListModel;
     /// Returns the properties model title.
-    pub fn nautilus_properties_model_get_title(
+    fn nautilus_properties_model_get_title(
         model: *mut NautilusPropertiesModel,
     ) -> *const c_char;
     /// Sets the properties model title.
-    pub fn nautilus_properties_model_set_title(
+    fn nautilus_properties_model_set_title(
         model: *mut NautilusPropertiesModel,
         title: *const c_char,
     );
     /// Returns the GType for `NautilusPropertiesModelProvider`.
-    pub fn nautilus_properties_model_provider_get_type() -> GType;
+    fn nautilus_properties_model_provider_get_type() -> GType;
     /// Calls a properties model provider's model method.
-    pub fn nautilus_properties_model_provider_get_models(
+    fn nautilus_properties_model_provider_get_models(
         provider: *mut NautilusPropertiesModelProvider,
         files: *mut GList,
     ) -> *mut GList;

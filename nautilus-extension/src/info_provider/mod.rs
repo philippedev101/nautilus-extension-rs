@@ -1,21 +1,15 @@
 use crate::gio_ffi::{
     g_file_get_path, g_file_get_uri, GFile, GFileType, GMount, G_FILE_TYPE_UNKNOWN,
 };
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use crate::glib_ffi::{
-    g_idle_source_new, g_source_attach, g_source_set_callback, g_source_set_priority,
-    g_source_unref, G_PRIORITY_DEFAULT,
-};
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::glib_ffi::{g_list_append, g_list_free};
-use crate::glib_ffi::{
-    g_main_context_default, g_main_context_ref, g_main_context_ref_thread_default,
-    g_main_context_unref, g_strdup, gboolean, gpointer, GList, GMainContext, GType, GFALSE, GTRUE,
+    g_idle_source_new, g_list_append, g_list_free, g_main_context_default, g_main_context_ref,
+    g_main_context_ref_thread_default, g_main_context_unref, g_source_attach,
+    g_source_set_callback, g_source_set_priority, g_source_unref, g_strdup, gboolean, gpointer,
+    GList, GMainContext, GType, GFALSE, GTRUE, G_PRIORITY_DEFAULT,
 };
 use crate::gobject_ffi::{
     g_closure_ref, g_closure_unref, g_object_ref, g_object_unref, GClosure, GObject,
 };
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use crate::nautilus_ffi::{
     nautilus_file_info_add_emblem, nautilus_file_info_add_string_attribute,
     nautilus_file_info_can_write, nautilus_file_info_create, nautilus_file_info_create_for_uri,
@@ -30,11 +24,9 @@ use crate::nautilus_ffi::{
     nautilus_file_info_list_free, nautilus_file_info_lookup, nautilus_file_info_lookup_for_uri,
     nautilus_info_provider_cancel_update, nautilus_info_provider_get_type,
     nautilus_info_provider_update_complete_invoke, nautilus_info_provider_update_file_info,
-    nautilus_operation_result_get_type,
-};
-use crate::nautilus_ffi::{
-    NautilusFileInfo, NautilusFileInfoInterface, NautilusInfoProvider, NautilusInfoProviderIface,
-    NautilusOperationHandle, NautilusOperationResult,
+    nautilus_operation_result_get_type, NautilusFileInfo, NautilusFileInfoInterface,
+    NautilusInfoProvider, NautilusInfoProviderIface, NautilusOperationHandle,
+    NautilusOperationResult, NATIVE_API_AVAILABLE,
 };
 use crate::slot_allocator::{release_slot, reset_slots, take_next_slot};
 use crate::translate::{file_info_vec_from_g_list, take_glib_string};

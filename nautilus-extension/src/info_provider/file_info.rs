@@ -7,16 +7,9 @@ pub struct FileInfo {
 }
 
 impl FileInfo {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusFileInfo` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_file_info_get_type() }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusFileInfo` GType.
-    pub fn type_() -> GType {
-        0
     }
 
     /// # Safety
@@ -50,60 +43,24 @@ impl FileInfo {
 
     /// Creates a `FileInfo` for a Gio file location.
     pub fn create(location: &OwnedGObject<GFile>) -> Option<FileInfo> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { FileInfo::from_raw_full(nautilus_file_info_create(location.as_ptr())) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = location;
-            None
-        }
+        unsafe { FileInfo::from_raw_full(nautilus_file_info_create(location.as_ptr())) }
     }
 
     /// Creates a `FileInfo` for a URI.
     pub fn create_for_uri(uri: &str) -> Option<FileInfo> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let uri = CString::new(uri).ok()?;
-            unsafe { FileInfo::from_raw_full(nautilus_file_info_create_for_uri(uri.as_ptr())) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = uri;
-            None
-        }
+        let uri = CString::new(uri).ok()?;
+        unsafe { FileInfo::from_raw_full(nautilus_file_info_create_for_uri(uri.as_ptr())) }
     }
 
     /// Looks up an existing `FileInfo` for a Gio file location.
     pub fn lookup(location: &OwnedGObject<GFile>) -> Option<FileInfo> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { FileInfo::from_raw_full(nautilus_file_info_lookup(location.as_ptr())) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = location;
-            None
-        }
+        unsafe { FileInfo::from_raw_full(nautilus_file_info_lookup(location.as_ptr())) }
     }
 
     /// Looks up an existing `FileInfo` for a URI.
     pub fn lookup_for_uri(uri: &str) -> Option<FileInfo> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let uri = CString::new(uri).ok()?;
-            unsafe { FileInfo::from_raw_full(nautilus_file_info_lookup_for_uri(uri.as_ptr())) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = uri;
-            None
-        }
+        let uri = CString::new(uri).ok()?;
+        unsafe { FileInfo::from_raw_full(nautilus_file_info_lookup_for_uri(uri.as_ptr())) }
     }
 
     /// Returns the wrapped raw `NautilusFileInfo` pointer.
@@ -125,181 +82,89 @@ impl FileInfo {
 
     /// Returns whether Nautilus considers the file gone.
     pub fn is_gone(&self) -> bool {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { nautilus_file_info_is_gone(self.raw_file_info) != GFALSE }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            false
-        }
+        unsafe { nautilus_file_info_is_gone(self.raw_file_info) != GFALSE }
     }
 
     /// Returns the display name for the file.
     pub fn name(&self) -> Option<String> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { take_glib_string(nautilus_file_info_get_name(self.raw_file_info)) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { take_glib_string(nautilus_file_info_get_name(self.raw_file_info)) }
     }
 
     /// Returns the file URI.
     pub fn uri(&self) -> Option<String> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { take_glib_string(nautilus_file_info_get_uri(self.raw_file_info)) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { take_glib_string(nautilus_file_info_get_uri(self.raw_file_info)) }
     }
 
     /// Returns the parent directory URI.
     pub fn parent_uri(&self) -> Option<String> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { take_glib_string(nautilus_file_info_get_parent_uri(self.raw_file_info)) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { take_glib_string(nautilus_file_info_get_parent_uri(self.raw_file_info)) }
     }
 
     /// Returns the URI scheme, such as `file` or `trash`.
     pub fn uri_scheme(&self) -> Option<String> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { take_glib_string(nautilus_file_info_get_uri_scheme(self.raw_file_info)) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { take_glib_string(nautilus_file_info_get_uri_scheme(self.raw_file_info)) }
     }
 
     /// Returns the MIME type known by Nautilus.
     pub fn mime_type(&self) -> Option<String> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { take_glib_string(nautilus_file_info_get_mime_type(self.raw_file_info)) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { take_glib_string(nautilus_file_info_get_mime_type(self.raw_file_info)) }
     }
 
     /// Returns whether the file matches `mime_type`.
     pub fn is_mime_type(&self, mime_type: &str) -> bool {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let mime_type = match CString::new(mime_type) {
-                Ok(mime_type) => mime_type,
-                Err(_) => return false,
-            };
+        let mime_type = match CString::new(mime_type) {
+            Ok(mime_type) => mime_type,
+            Err(_) => return false,
+        };
 
-            unsafe {
-                nautilus_file_info_is_mime_type(self.raw_file_info, mime_type.as_ptr()) != GFALSE
-            }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = mime_type;
-            false
-        }
+        unsafe { nautilus_file_info_is_mime_type(self.raw_file_info, mime_type.as_ptr()) != GFALSE }
     }
 
     /// Returns whether the file is a directory.
     pub fn is_directory(&self) -> bool {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { nautilus_file_info_is_directory(self.raw_file_info) != GFALSE }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            false
-        }
+        unsafe { nautilus_file_info_is_directory(self.raw_file_info) != GFALSE }
     }
 
     /// Adds an emblem by icon name.
     pub fn add_emblem(&self, emblem_name: &str) {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let emblem_name = match CString::new(emblem_name) {
-                Ok(emblem_name) => emblem_name,
-                Err(_) => return,
-            };
+        let emblem_name = match CString::new(emblem_name) {
+            Ok(emblem_name) => emblem_name,
+            Err(_) => return,
+        };
 
-            unsafe {
-                nautilus_file_info_add_emblem(self.raw_file_info, emblem_name.as_ptr());
-            }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = emblem_name;
+        unsafe {
+            nautilus_file_info_add_emblem(self.raw_file_info, emblem_name.as_ptr());
         }
     }
 
     /// Returns a string attribute previously known to Nautilus.
     pub fn string_attribute(&self, attribute_name: &str) -> Option<String> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let attribute_name = CString::new(attribute_name).ok()?;
-            unsafe {
-                take_glib_string(nautilus_file_info_get_string_attribute(
-                    self.raw_file_info,
-                    attribute_name.as_ptr(),
-                ))
-            }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = attribute_name;
-            None
+        let attribute_name = CString::new(attribute_name).ok()?;
+        unsafe {
+            take_glib_string(nautilus_file_info_get_string_attribute(
+                self.raw_file_info,
+                attribute_name.as_ptr(),
+            ))
         }
     }
 
     /// Adds or updates a string attribute for this file.
     pub fn add_string_attribute(&self, attribute_name: &str, value: &str) {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let attribute_name = match CString::new(attribute_name) {
-                Ok(attribute_name) => attribute_name,
-                Err(_) => return,
-            };
-            let value = match CString::new(value) {
-                Ok(value) => value,
-                Err(_) => return,
-            };
+        let attribute_name = match CString::new(attribute_name) {
+            Ok(attribute_name) => attribute_name,
+            Err(_) => return,
+        };
+        let value = match CString::new(value) {
+            Ok(value) => value,
+            Err(_) => return,
+        };
 
-            unsafe {
-                nautilus_file_info_add_string_attribute(
-                    self.raw_file_info,
-                    attribute_name.as_ptr(),
-                    value.as_ptr(),
-                );
-            }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = (attribute_name, value);
+        unsafe {
+            nautilus_file_info_add_string_attribute(
+                self.raw_file_info,
+                attribute_name.as_ptr(),
+                value.as_ptr(),
+            );
         }
     }
 
@@ -310,53 +175,24 @@ impl FileInfo {
 
     /// Asks Nautilus to refresh extension-provided info for this file.
     pub fn invalidate_extension_info(&self) {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe {
-                nautilus_file_info_invalidate_extension_info(self.raw_file_info);
-            }
+        unsafe {
+            nautilus_file_info_invalidate_extension_info(self.raw_file_info);
         }
     }
 
     /// Returns the activation URI Nautilus would open.
     pub fn activation_uri(&self) -> Option<String> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { take_glib_string(nautilus_file_info_get_activation_uri(self.raw_file_info)) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { take_glib_string(nautilus_file_info_get_activation_uri(self.raw_file_info)) }
     }
 
     /// Returns the Gio file type.
     pub fn file_type(&self) -> GFileType {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { nautilus_file_info_get_file_type(self.raw_file_info) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            G_FILE_TYPE_UNKNOWN
-        }
+        unsafe { nautilus_file_info_get_file_type(self.raw_file_info) }
     }
 
     /// Returns the Gio location object.
     pub fn location(&self) -> Option<OwnedGObject<GFile>> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe {
-                OwnedGObject::from_raw_full(nautilus_file_info_get_location(self.raw_file_info))
-            }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { OwnedGObject::from_raw_full(nautilus_file_info_get_location(self.raw_file_info)) }
     }
 
     /// Returns the URI for the Gio location object.
@@ -373,60 +209,24 @@ impl FileInfo {
 
     /// Returns the Gio location of the parent directory.
     pub fn parent_location(&self) -> Option<OwnedGObject<GFile>> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe {
-                OwnedGObject::from_raw_full(nautilus_file_info_get_parent_location(
-                    self.raw_file_info,
-                ))
-            }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
+        unsafe {
+            OwnedGObject::from_raw_full(nautilus_file_info_get_parent_location(self.raw_file_info))
         }
     }
 
     /// Returns the parent directory's file info.
     pub fn parent_info(&self) -> Option<FileInfo> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe {
-                FileInfo::from_raw_full(nautilus_file_info_get_parent_info(self.raw_file_info))
-            }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { FileInfo::from_raw_full(nautilus_file_info_get_parent_info(self.raw_file_info)) }
     }
 
     /// Returns the mount that contains this file.
     pub fn mount(&self) -> Option<OwnedGObject<GMount>> {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { OwnedGObject::from_raw_full(nautilus_file_info_get_mount(self.raw_file_info)) }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            None
-        }
+        unsafe { OwnedGObject::from_raw_full(nautilus_file_info_get_mount(self.raw_file_info)) }
     }
 
     /// Returns whether the current user can write to the file.
     pub fn can_write(&self) -> bool {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            unsafe { nautilus_file_info_can_write(self.raw_file_info) != GFALSE }
-        }
-
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            false
-        }
+        unsafe { nautilus_file_info_can_write(self.raw_file_info) != GFALSE }
     }
 
     /// Returns the file URI or an empty string if it is unavailable.
@@ -474,7 +274,6 @@ impl FileInfoList {
         }
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// # Safety
     ///
     /// `raw` must be either null or a valid borrowed `GList` containing
@@ -483,15 +282,6 @@ impl FileInfoList {
         unsafe { FileInfoList::from_raw_full(nautilus_file_info_list_copy(raw)) }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// # Safety
-    ///
-    /// This no-link test-mode implementation does not inspect `raw`.
-    pub unsafe fn copy_from_raw(_raw: *mut GList) -> Option<FileInfoList> {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Copies a slice of file-info objects into a Nautilus-owned list wrapper.
     pub fn copy(files: &[FileInfo]) -> Option<FileInfoList> {
         let mut raw_files: *mut GList = ptr::null_mut();
@@ -508,12 +298,6 @@ impl FileInfoList {
             g_list_free(raw_files);
             FileInfoList::from_raw_full(copied)
         }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Copies a slice of file-info objects into a Nautilus-owned list wrapper.
-    pub fn copy(_files: &[FileInfo]) -> Option<FileInfoList> {
-        None
     }
 
     /// Returns the wrapped raw `GList` pointer.
@@ -542,7 +326,6 @@ impl FileInfoList {
 impl Drop for FileInfoList {
     fn drop(&mut self) {
         if !self.raw.is_null() {
-            #[cfg(not(nautilus_extension_rs_skip_link))]
             unsafe {
                 nautilus_file_info_list_free(self.raw);
             }
@@ -584,16 +367,9 @@ pub struct FileInfoHandle {
 }
 
 impl FileInfoHandle {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusFileInfo` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_file_info_get_type() }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusFileInfo` GType.
-    pub fn type_() -> GType {
-        0
     }
 
     /// # Safety

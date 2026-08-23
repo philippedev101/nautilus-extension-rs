@@ -228,53 +228,41 @@ impl NautilusModule {
 
         rust_activate_setter(Box::new(activate));
 
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            let _ = c_type_name;
-            let _ = class_init_fn;
+        if !NATIVE_API_AVAILABLE {
             release_menu_item_class_index(index);
-            Err(NautilusModuleError::NativeApiUnavailable {
+            return Err(NautilusModuleError::NativeApiUnavailable {
                 api: "NautilusMenuItem subtype registration",
-            })
+            });
         }
 
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let parent_type = unsafe { nautilus_menu_item_get_type() };
-            let parent_size = g_type_size(parent_type);
-            let info = GTypeInfo {
-                class_size: parent_size.class_size,
-                base_init: None,
-                base_finalize: None,
-                class_init: Some(class_init_fn),
-                class_finalize: None,
-                class_data: ptr::null(),
-                instance_size: parent_size.instance_size,
-                n_preallocs: 0,
-                instance_init: None,
-                value_table: &EMPTY_VALUE_TABLE,
-            };
+        let parent_type = unsafe { nautilus_menu_item_get_type() };
+        let parent_size = g_type_size(parent_type);
+        let info = GTypeInfo {
+            class_size: parent_size.class_size,
+            base_init: None,
+            base_finalize: None,
+            class_init: Some(class_init_fn),
+            class_finalize: None,
+            class_data: ptr::null(),
+            instance_size: parent_size.instance_size,
+            n_preallocs: 0,
+            instance_init: None,
+            value_table: &EMPTY_VALUE_TABLE,
+        };
 
-            let item_type = unsafe {
-                g_type_module_register_type(
-                    self.module,
-                    parent_type,
-                    c_type_name.as_ptr(),
-                    &info,
-                    0,
-                )
-            };
+        let item_type = unsafe {
+            g_type_module_register_type(self.module, parent_type, c_type_name.as_ptr(), &info, 0)
+        };
 
-            if item_type == 0 {
-                release_menu_item_class_index(index);
-                return Err(NautilusModuleError::TypeRegistrationFailed { type_name });
-            }
-
-            self.reservations
-                .push(ProviderReservation::MenuItemActivate(index));
-
-            Ok(unsafe { MenuItemType::from_raw(item_type) }.expect("registered GType is nonzero"))
+        if item_type == 0 {
+            release_menu_item_class_index(index);
+            return Err(NautilusModuleError::TypeRegistrationFailed { type_name });
         }
+
+        self.reservations
+            .push(ProviderReservation::MenuItemActivate(index));
+
+        Ok(unsafe { MenuItemType::from_raw(item_type) }.expect("registered GType is nonzero"))
     }
 
     /// Adds a [`MenuProvider`] to this module.
@@ -390,92 +378,83 @@ impl NautilusModule {
     /// Returns `0` if native type registration is unavailable, the type name is
     /// invalid, or GObject rejects the registration.
     pub fn register(&self) -> GType {
-        #[cfg(nautilus_extension_rs_skip_link)]
-        {
-            0
+        if !NATIVE_API_AVAILABLE {
+            return 0;
         }
 
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        {
-            let name = match CString::new(&self.name as &str) {
-                Ok(name) => name,
-                Err(_) => return 0,
-            };
+        let name = match CString::new(&self.name as &str) {
+            Ok(name) => name,
+            Err(_) => return 0,
+        };
 
-            let info = GTypeInfo {
-                class_size: mem::size_of::<NautilusExtensionClass>() as u16,
-                base_init: None,
-                base_finalize: None,
-                class_init: None,
-                class_finalize: None,
-                class_data: ptr::null(),
-                instance_size: g_object_instance_size(),
-                n_preallocs: 0,
-                instance_init: None,
-                value_table: &EMPTY_VALUE_TABLE,
-            };
+        let info = GTypeInfo {
+            class_size: mem::size_of::<NautilusExtensionClass>() as u16,
+            base_init: None,
+            base_finalize: None,
+            class_init: None,
+            class_finalize: None,
+            class_data: ptr::null(),
+            instance_size: g_object_instance_size(),
+            n_preallocs: 0,
+            instance_init: None,
+            value_table: &EMPTY_VALUE_TABLE,
+        };
 
-            unsafe {
-                let module_type = g_type_module_register_type(
-                    self.module,
-                    G_TYPE_OBJECT,
-                    name.as_ptr(),
-                    &info,
-                    0,
-                );
+        unsafe {
+            let module_type =
+                g_type_module_register_type(self.module, G_TYPE_OBJECT, name.as_ptr(), &info, 0);
 
-                if module_type == 0 {
-                    return 0;
-                }
-
-                for column_provider_iface_info in &self.column_provider_iface_infos {
-                    g_type_module_add_interface(
-                        self.module,
-                        module_type,
-                        nautilus_column_provider_get_type(),
-                        column_provider_iface_info,
-                    );
-                }
-
-                for file_info_iface_info in &self.file_info_iface_infos {
-                    g_type_module_add_interface(
-                        self.module,
-                        module_type,
-                        nautilus_file_info_get_type(),
-                        file_info_iface_info,
-                    );
-                }
-
-                for info_provider_iface_info in &self.info_provider_iface_infos {
-                    g_type_module_add_interface(
-                        self.module,
-                        module_type,
-                        nautilus_info_provider_get_type(),
-                        info_provider_iface_info,
-                    );
-                }
-
-                for menu_provider_iface_info in &self.menu_provider_iface_infos {
-                    g_type_module_add_interface(
-                        self.module,
-                        module_type,
-                        nautilus_menu_provider_get_type(),
-                        menu_provider_iface_info,
-                    );
-                }
-
-                for iface_info in &self.properties_model_provider_iface_infos {
-                    g_type_module_add_interface(
-                        self.module,
-                        module_type,
-                        nautilus_properties_model_provider_get_type(),
-                        iface_info,
-                    );
-                }
-
-                self.registered.set(true);
-                module_type
+            if module_type == 0 {
+                return 0;
             }
+
+            for column_provider_iface_info in &self.column_provider_iface_infos {
+                g_type_module_add_interface(
+                    self.module,
+                    module_type,
+                    nautilus_column_provider_get_type(),
+                    column_provider_iface_info,
+                );
+            }
+
+            for file_info_iface_info in &self.file_info_iface_infos {
+                g_type_module_add_interface(
+                    self.module,
+                    module_type,
+                    nautilus_file_info_get_type(),
+                    file_info_iface_info,
+                );
+            }
+
+            for info_provider_iface_info in &self.info_provider_iface_infos {
+                g_type_module_add_interface(
+                    self.module,
+                    module_type,
+                    nautilus_info_provider_get_type(),
+                    info_provider_iface_info,
+                );
+            }
+
+            for menu_provider_iface_info in &self.menu_provider_iface_infos {
+                g_type_module_add_interface(
+                    self.module,
+                    module_type,
+                    nautilus_menu_provider_get_type(),
+                    menu_provider_iface_info,
+                );
+            }
+
+            for iface_info in &self.properties_model_provider_iface_infos {
+                g_type_module_add_interface(
+                    self.module,
+                    module_type,
+                    nautilus_properties_model_provider_get_type(),
+                    iface_info,
+                );
+            }
+
+            self.registered.set(true);
+            module_type
         }
     }
 }
@@ -492,19 +471,16 @@ impl Drop for NautilusModule {
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 fn g_object_instance_size() -> u16 {
     g_type_size(G_TYPE_OBJECT).instance_size
 }
 
 #[derive(Clone, Copy)]
-#[cfg(not(nautilus_extension_rs_skip_link))]
 struct GTypeSize {
     class_size: u16,
     instance_size: u16,
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 fn g_type_size(type_: GType) -> GTypeSize {
     let mut query: GTypeQuery = GTypeQuery {
         type_: 0,

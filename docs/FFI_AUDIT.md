@@ -6,6 +6,18 @@ Nautilus loads extension shared objects in-process. Rust panics must not unwind
 through Nautilus or GLib C frames. Raw pointer use must stay local to wrapper
 constructors, GObject property helpers, and generated trampolines.
 
+## Builds Without the Native Library
+
+On docs.rs, and on hosts where `NAUTILUS_EXTENSION_RS_SKIP_NAUTILUS4_PKG_CONFIG`
+allows a build without the Nautilus development package, the C symbols cannot be
+referenced. `nautilus-extension-sys/src/unlinked.rs` then substitutes stubs with
+the same signatures that ignore their arguments and return a neutral value: a
+null pointer, `G_TYPE_INVALID`, `FALSE`, or `NautilusOperationFailed`. Those
+values flow through the ordinary null checks in the wrappers, so the safe API
+reports `None`, `false`, and `OperationResult::Failed` without a second code
+path. Nothing in the wrapper crates is compiled conditionally on that build
+mode; the public `NATIVE_API_AVAILABLE` constant is the run-time signal.
+
 ## C ABI Entry Points
 
 The `nautilus_module!` macro exports the required Nautilus symbols:

@@ -14,3 +14,9 @@ sys crate.
 syntax checks and pure Rust unit tests in minimal environments. It cannot
 produce a loadable extension unless the Nautilus API 4 library is actually
 available to the linker.
+
+In that configuration the C symbols cannot be referenced at all, so `src/unlinked.rs`
+expands the same Nautilus API declarations into stubs with identical signatures
+that return a neutral value. `NATIVE_API_AVAILABLE` reports which of the two
+builds this is, so callers can branch at run time instead of duplicating
+themselves behind a cfg.

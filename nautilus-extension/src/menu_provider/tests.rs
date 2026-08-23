@@ -1,5 +1,6 @@
 use super::*;
 use super::{activation::*, menu_item_class::*, menu_provider_iface::*};
+use crate::test_support::{require_native_api, require_unlinked_build};
 use std::sync::atomic::Ordering;
 
 static MENU_DESTROY_DROP_CALLS: AtomicUsize = AtomicUsize::new(0);
@@ -32,27 +33,22 @@ impl MenuProvider for PanickingMenuProvider {
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 struct PanickingBackgroundMenuProvider;
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 impl MenuProvider for PanickingBackgroundMenuProvider {
     fn get_background_items(&self, _current_folder: &FileInfo) -> Vec<MenuItem> {
         panic!("menu provider background callback panic");
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 struct PanickingMenuItemActivate;
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 impl MenuItemActivate for PanickingMenuItemActivate {
     fn activate(&self, _item: &MenuItemObject) {
         panic!("menu item activate callback panic");
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 fn opaque_native_file_info() -> FileInfo {
     let raw = unsafe {
         crate::gobject_ffi::g_object_new(crate::gobject_ffi::G_TYPE_OBJECT, ptr::null::<c_char>())
@@ -211,9 +207,10 @@ fn menu_provider_iface_trampoline_catches_file_item_provider_panics() {
     reset_menu_provider_state();
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn menu_provider_iface_trampoline_catches_background_provider_panics() {
+    require_native_api!();
+
     let _guard = crate::test_support::PROVIDER_STATE_LOCK
         .lock()
         .expect("provider-state test lock poisoned");
@@ -239,17 +236,19 @@ fn menu_provider_iface_trampoline_catches_background_provider_panics() {
     reset_menu_provider_state();
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn documented_type_accessors_are_inert_in_no_link_mode() {
+    require_unlinked_build!();
+
     assert_eq!(MenuObject::type_(), 0);
     assert_eq!(MenuItemObject::type_(), 0);
     assert_eq!(MenuProviderHandle::type_(), 0);
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn optional_submenu_assignment_is_inert_in_no_link_mode() {
+    require_unlinked_build!();
+
     let item = MenuItemObject {
         raw: ptr::null_mut(),
     };
@@ -262,9 +261,10 @@ fn optional_submenu_assignment_is_inert_in_no_link_mode() {
     assert!(!item.clear_submenu());
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn documented_type_accessors_return_registered_gtypes() {
+    require_native_api!();
+
     assert_ne!(MenuObject::type_(), 0);
     assert_ne!(MenuItemObject::type_(), 0);
     assert_ne!(MenuProviderHandle::type_(), 0);
@@ -314,9 +314,10 @@ fn signal_destroy_callbacks_catch_panicking_payload_drops() {
     assert_eq!(MENU_DESTROY_DROP_CALLS.load(Ordering::SeqCst), 3);
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn signal_trampolines_catch_panicking_callbacks() {
+    require_native_api!();
+
     let file = opaque_native_file_info();
     let item = MenuItemObject::new("RustValidation::signal", "Signal").unwrap();
 
@@ -361,9 +362,10 @@ fn signal_trampolines_catch_panicking_callbacks() {
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn menu_item_activate_vfunc_catches_provider_panics() {
+    require_native_api!();
+
     let _guard = crate::test_support::PROVIDER_STATE_LOCK
         .lock()
         .expect("provider-state test lock poisoned");
@@ -381,9 +383,10 @@ fn menu_item_activate_vfunc_catches_provider_panics() {
     reset_menu_item_activate_state();
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn set_submenu_accepts_borrowed_submenu_wrapper() {
+    require_native_api!();
+
     let item = MenuItemObject::new("Example::parent", "Parent").unwrap();
     let submenu = MenuObject::new().unwrap();
 
@@ -393,9 +396,10 @@ fn set_submenu_accepts_borrowed_submenu_wrapper() {
     assert!(submenu.get_items().is_empty());
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn optional_submenu_assignment_can_attach_submenus() {
+    require_native_api!();
+
     let item = MenuItemObject::new("Example::parent", "Parent").unwrap();
     let submenu = MenuObject::new().unwrap();
 

@@ -38,7 +38,6 @@ pub unsafe fn take_glib_string(raw: *mut c_char) -> Option<String> {
     Some(value)
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub unsafe fn borrowed_string(raw: *const c_char) -> Option<String> {
     if raw.is_null() {
         return None;

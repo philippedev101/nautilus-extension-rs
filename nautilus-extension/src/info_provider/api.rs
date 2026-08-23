@@ -12,16 +12,9 @@ pub enum OperationResult {
 }
 
 impl OperationResult {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusOperationResult` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_operation_result_get_type() }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusOperationResult` GType.
-    pub fn type_() -> GType {
-        0
     }
 }
 
@@ -159,16 +152,9 @@ pub struct InfoProviderHandle {
 }
 
 impl InfoProviderHandle {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusInfoProvider` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_info_provider_get_type() }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusInfoProvider` GType.
-    pub fn type_() -> GType {
-        0
     }
 
     /// # Safety
@@ -217,7 +203,6 @@ impl InfoProviderHandle {
         raw
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Invokes the raw Nautilus info-provider update function.
     ///
     /// # Safety
@@ -248,21 +233,6 @@ impl InfoProviderHandle {
         (result, handle)
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Invokes the raw Nautilus info-provider update function.
-    ///
-    /// # Safety
-    ///
-    /// This no-link test-mode implementation does not touch the raw closure.
-    pub unsafe fn update_file_info_raw(
-        &self,
-        _file: &FileInfo,
-        _update_complete: *mut GClosure,
-    ) -> (OperationResult, Option<OperationHandle>) {
-        (OperationResult::Failed, None)
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Invokes the raw Nautilus info-provider update function with a wrapped callback.
     ///
     /// # Safety
@@ -278,21 +248,6 @@ impl InfoProviderHandle {
         unsafe { self.update_file_info_raw(file, update_complete.raw()) }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Invokes the raw Nautilus info-provider update function with a wrapped callback.
-    ///
-    /// # Safety
-    ///
-    /// This no-link test-mode implementation does not touch the raw callback.
-    pub unsafe fn update_file_info_with_callback(
-        &self,
-        _file: &FileInfo,
-        _update_complete: &UpdateCompleteCallback,
-    ) -> (OperationResult, Option<OperationHandle>) {
-        (OperationResult::Failed, None)
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Calls the provider's raw cancel function for an operation handle.
     pub fn cancel_update(&self, handle: &OperationHandle) {
         let raw = handle.raw();
@@ -304,10 +259,6 @@ impl InfoProviderHandle {
             nautilus_info_provider_cancel_update(self.raw, raw);
         }
     }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Calls the provider's raw cancel function for an operation handle.
-    pub fn cancel_update(&self, _handle: &OperationHandle) {}
 }
 
 impl Clone for InfoProviderHandle {
@@ -387,7 +338,6 @@ impl UpdateCompleteCallback {
         raw
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Invokes Nautilus' update-complete callback.
     ///
     /// # Safety
@@ -401,7 +351,11 @@ impl UpdateCompleteCallback {
         handle: &OperationHandle,
         result: OperationResult,
     ) -> bool {
-        if self.raw.is_null() || provider.raw().is_null() || handle.raw().is_null() {
+        if !NATIVE_API_AVAILABLE
+            || self.raw.is_null()
+            || provider.raw().is_null()
+            || handle.raw().is_null()
+        {
             return false;
         }
 
@@ -414,21 +368,6 @@ impl UpdateCompleteCallback {
             );
         }
         true
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Invokes Nautilus' update-complete callback.
-    ///
-    /// # Safety
-    ///
-    /// This no-link test-mode implementation does not invoke the raw callback.
-    pub unsafe fn invoke(
-        &self,
-        _provider: &InfoProviderHandle,
-        _handle: &OperationHandle,
-        _result: OperationResult,
-    ) -> bool {
-        false
     }
 }
 

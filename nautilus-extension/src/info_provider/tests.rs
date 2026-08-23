@@ -1,13 +1,12 @@
 use super::*;
 use super::{file_info_iface::*, info_provider_iface::*};
+use crate::test_support::{require_native_api, require_unlinked_build};
 
 static COMPLETION_DESTROY_DROP_CALLS: AtomicUsize = AtomicUsize::new(0);
 static COMPLETION_ALREADY_DONE_DROP_CALLS: AtomicUsize = AtomicUsize::new(0);
 static COMPLETION_SCHEDULE_FAILURE_DROP_CALLS: AtomicUsize = AtomicUsize::new(0);
 static CANCEL_UPDATE_CALLS: AtomicUsize = AtomicUsize::new(0);
-#[cfg(not(nautilus_extension_rs_skip_link))]
 static ASYNC_UPDATE_CALLS: AtomicUsize = AtomicUsize::new(0);
-#[cfg(not(nautilus_extension_rs_skip_link))]
 static ASYNC_CANCEL_CALLS: AtomicUsize = AtomicUsize::new(0);
 
 struct PanickingCompletionDropPayload;
@@ -47,20 +46,16 @@ impl InfoProvider for PanickingCancelInfoProvider {
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 struct PanickingUpdateInfoProvider;
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 impl InfoProvider for PanickingUpdateInfoProvider {
     fn update_file_info_full(&self, _operation: UpdateFileInfoOperation) -> OperationResult {
         panic!("info provider update callback panic");
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 struct AsyncCancelInfoProvider;
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 impl InfoProvider for AsyncCancelInfoProvider {
     fn update_file_info_full(&self, operation: UpdateFileInfoOperation) -> OperationResult {
         let pending = operation.into_pending();
@@ -75,15 +70,12 @@ impl InfoProvider for AsyncCancelInfoProvider {
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 unsafe extern "C" fn noop_update_complete() {}
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 fn test_update_complete_closure() -> *mut GClosure {
     unsafe { crate::gobject_ffi::g_cclosure_new(Some(noop_update_complete), ptr::null_mut(), None) }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 fn opaque_native_file_info() -> FileInfo {
     let raw = unsafe {
         crate::gobject_ffi::g_object_new(crate::gobject_ffi::G_TYPE_OBJECT, ptr::null::<c_char>())
@@ -327,9 +319,10 @@ fn info_provider_iface_cancel_routes_unknown_handles_and_catches_provider_panics
     reset_info_provider_state();
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn info_provider_iface_update_catches_provider_panics_with_real_native_inputs() {
+    require_native_api!();
+
     let _guard = crate::test_support::PROVIDER_STATE_LOCK
         .lock()
         .expect("provider-state test lock poisoned");
@@ -364,9 +357,10 @@ fn info_provider_iface_update_catches_provider_panics_with_real_native_inputs() 
     reset_info_provider_state();
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn info_provider_async_cancel_stress_uses_real_native_handles() {
+    require_native_api!();
+
     let _guard = crate::test_support::PROVIDER_STATE_LOCK
         .lock()
         .expect("provider-state test lock poisoned");
@@ -409,18 +403,20 @@ fn info_provider_async_cancel_stress_uses_real_native_handles() {
     reset_info_provider_state();
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn documented_type_accessors_are_inert_in_no_link_mode() {
+    require_unlinked_build!();
+
     assert_eq!(OperationResult::type_(), 0);
     assert_eq!(FileInfo::type_(), 0);
     assert_eq!(FileInfoHandle::type_(), 0);
     assert_eq!(InfoProviderHandle::type_(), 0);
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn file_info_native_helpers_are_inert_in_no_link_mode() {
+    require_unlinked_build!();
+
     assert!(FileInfo::create_for_uri("file:///tmp/example").is_none());
     assert!(FileInfo::lookup_for_uri("file:///tmp/example").is_none());
     assert!(unsafe { FileInfoList::copy_from_raw(0x5678usize as *mut GList) }.is_none());
@@ -467,9 +463,10 @@ fn file_info_native_helpers_are_inert_in_no_link_mode() {
     assert_eq!(file_info.into_raw() as usize, 0x1234);
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn documented_type_accessors_return_registered_gtypes() {
+    require_native_api!();
+
     assert_ne!(OperationResult::type_(), 0);
     assert_ne!(FileInfo::type_(), 0);
     assert_ne!(FileInfoHandle::type_(), 0);

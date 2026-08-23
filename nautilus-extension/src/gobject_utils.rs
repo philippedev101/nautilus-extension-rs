@@ -1,15 +1,10 @@
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::glib_ffi::{g_list_free_full, gpointer, GList};
-use crate::glib_ffi::{gboolean, GQuark, GFALSE, GTRUE};
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::gobject_ffi::g_object_unref;
-use crate::gobject_ffi::{g_object_get, g_object_set, GObject};
+use crate::glib_ffi::{g_list_free_full, gboolean, gpointer, GList, GQuark, GFALSE, GTRUE};
+use crate::gobject_ffi::{g_object_get, g_object_set, g_object_unref, GObject};
 use crate::translate::take_glib_string;
 use libc::{c_char, c_double, c_float, c_int};
 use std::ffi::CString;
 use std::ptr;
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub unsafe extern "C" fn unref_g_object(data: gpointer) {
     if !data.is_null() {
         unsafe {
@@ -18,7 +13,6 @@ pub unsafe extern "C" fn unref_g_object(data: gpointer) {
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub unsafe fn free_owned_g_object_list(list: *mut GList) {
     if !list.is_null() {
         unsafe {

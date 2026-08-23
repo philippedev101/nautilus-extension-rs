@@ -1,25 +1,19 @@
-use crate::glib_ffi::GQuark;
-use crate::glib_ffi::{g_list_append, gpointer, GList, GType};
+use crate::glib_ffi::{g_list_append, gpointer, GList, GQuark, GType};
 use crate::gobject_ffi::{g_object_ref, g_object_unref, GObject};
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::gobject_utils::free_owned_g_object_list;
 use crate::gobject_utils::{
-    get_bool_property, get_float_property, get_int_property, get_quark_property,
-    get_string_property, set_bool_property, set_double_property, set_int_property,
-    set_string_property,
+    free_owned_g_object_list, get_bool_property, get_float_property, get_int_property,
+    get_quark_property, get_string_property, set_bool_property, set_double_property,
+    set_int_property, set_string_property,
 };
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use crate::nautilus_ffi::{
     nautilus_column_get_type, nautilus_column_new, nautilus_column_provider_get_columns,
-    nautilus_column_provider_get_type,
+    nautilus_column_provider_get_type, NautilusColumn, NautilusColumnProvider,
+    NautilusColumnProviderIface,
 };
-use crate::nautilus_ffi::{NautilusColumn, NautilusColumnProvider, NautilusColumnProviderIface};
 use crate::slot_allocator::{release_slot, reset_slots, take_next_slot};
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use crate::translate::vec_from_g_list;
 use libc::{c_int, c_void};
 use std::borrow::Cow;
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use std::ffi::CString;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
@@ -38,7 +32,6 @@ pub enum ColumnSortOrder {
 }
 
 impl ColumnSortOrder {
-    #[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
     fn to_sort_type(self) -> c_int {
         match self {
             ColumnSortOrder::Ascending => 0,
@@ -129,7 +122,6 @@ impl Column {
         self.default_sort_order
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Builds the corresponding `NautilusColumn` object.
     pub fn to_object(&self) -> Option<ColumnObject> {
         let name = CString::new(&self.name as &str).ok()?;
@@ -167,20 +159,8 @@ impl Column {
         Some(column)
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Builds the corresponding `NautilusColumn` object.
-    pub fn to_object(&self) -> Option<ColumnObject> {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     fn to_raw(&self) -> Option<*mut NautilusColumn> {
         self.to_object().map(ColumnObject::into_raw)
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    fn to_raw(&self) -> Option<*mut NautilusColumn> {
-        None
     }
 }
 
@@ -191,19 +171,11 @@ pub struct ColumnObject {
 }
 
 impl ColumnObject {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusColumn` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_column_get_type() }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusColumn` GType.
-    pub fn type_() -> GType {
-        0
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Creates a native `NautilusColumn` object.
     pub fn new<N, A, L, D>(name: N, attribute: A, label: L, description: D) -> Option<ColumnObject>
     where
@@ -225,23 +197,6 @@ impl ColumnObject {
                 description.as_ptr(),
             ))
         }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Creates a native `NautilusColumn` object.
-    pub fn new<N, A, L, D>(
-        _name: N,
-        _attribute: A,
-        _label: L,
-        _description: D,
-    ) -> Option<ColumnObject>
-    where
-        N: AsRef<str>,
-        A: AsRef<str>,
-        L: AsRef<str>,
-        D: AsRef<str>,
-    {
-        None
     }
 
     /// # Safety
@@ -430,16 +385,9 @@ pub struct ColumnProviderHandle {
 }
 
 impl ColumnProviderHandle {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusColumnProvider` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_column_provider_get_type() }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusColumnProvider` GType.
-    pub fn type_() -> GType {
-        0
     }
 
     /// # Safety
@@ -490,7 +438,6 @@ impl ColumnProviderHandle {
         raw
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Calls the provider interface and returns native column objects.
     pub fn get_columns(&self) -> Vec<ColumnObject> {
         let columns = unsafe { nautilus_column_provider_get_columns(self.raw) };
@@ -505,12 +452,6 @@ impl ColumnProviderHandle {
         }
 
         vec
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Calls the provider interface and returns native column objects.
-    pub fn get_columns(&self) -> Vec<ColumnObject> {
-        Vec::new()
     }
 
     /// Calls the provider interface and returns native column objects.
@@ -733,6 +674,7 @@ pub fn reset_column_provider_state() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::{require_native_api, require_unlinked_build};
     use std::sync::atomic::Ordering;
 
     static GET_COLUMNS_CALLS: AtomicUsize = AtomicUsize::new(0);
@@ -860,16 +802,18 @@ mod tests {
         reset_column_provider_state();
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
     #[test]
     fn documented_type_accessors_are_inert_in_no_link_mode() {
+        require_unlinked_build!();
+
         assert_eq!(ColumnObject::type_(), 0);
         assert_eq!(ColumnProviderHandle::type_(), 0);
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     #[test]
     fn documented_type_accessors_return_registered_gtypes() {
+        require_native_api!();
+
         assert_ne!(ColumnObject::type_(), 0);
         assert_ne!(ColumnProviderHandle::type_(), 0);
     }

@@ -4,13 +4,10 @@ use crate::column_provider::{
     MAX_COLUMN_PROVIDERS,
 };
 use crate::glib_ffi::GType;
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::gobject_ffi::G_TYPE_OBJECT;
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::gobject_ffi::{g_type_module_add_interface, g_type_module_register_type, g_type_query};
-use crate::gobject_ffi::{GInterfaceInfo, GTypeModule};
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::gobject_ffi::{GObjectClass, GTypeInfo, GTypeQuery, GTypeValueTable};
+use crate::gobject_ffi::{
+    g_type_module_add_interface, g_type_module_register_type, g_type_query, GInterfaceInfo,
+    GObjectClass, GTypeInfo, GTypeModule, GTypeQuery, GTypeValueTable, G_TYPE_OBJECT,
+};
 use crate::info_provider::{
     file_info_iface_externs, info_provider_iface_externs, release_file_info_iface_index,
     release_info_provider_iface_index, rust_file_info_impl_setters, rust_info_provider_setters,
@@ -23,37 +20,28 @@ use crate::menu_provider::{
     take_next_menu_item_class_index, take_next_menu_provider_iface_index, MenuItemActivate,
     MenuItemType, MenuProvider, MAX_MENU_ITEM_ACTIVATORS, MAX_MENU_PROVIDERS,
 };
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use crate::nautilus_ffi::nautilus_menu_item_get_type;
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use crate::nautilus_ffi::{
     nautilus_column_provider_get_type, nautilus_file_info_get_type,
-    nautilus_info_provider_get_type, nautilus_menu_provider_get_type,
-    nautilus_properties_model_provider_get_type,
+    nautilus_info_provider_get_type, nautilus_menu_item_get_type, nautilus_menu_provider_get_type,
+    nautilus_properties_model_provider_get_type, NATIVE_API_AVAILABLE,
 };
 use crate::properties_model_provider::{
     properties_model_provider_iface_externs, release_properties_model_provider_iface_index,
     rust_properties_model_provider_setters, take_next_properties_model_provider_iface_index,
     PropertiesModelProvider, MAX_PROPERTIES_MODEL_PROVIDERS,
 };
-#[cfg(not(nautilus_extension_rs_skip_link))]
 use libc::c_char;
 use std::borrow::Cow;
 use std::cell::Cell;
 use std::error::Error;
 use std::ffi::CString;
-use std::fmt;
-#[cfg(not(nautilus_extension_rs_skip_link))]
-use std::mem;
-use std::ptr;
+use std::{fmt, mem, ptr};
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[repr(C)]
 struct NautilusExtensionClass {
     _parent_slot: GObjectClass,
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 const EMPTY_VALUE_TABLE: GTypeValueTable = GTypeValueTable {
     value_init: None,
     value_free: None,
@@ -71,9 +59,7 @@ const EMPTY_VALUE_TABLE: GTypeValueTable = GTypeValueTable {
 /// [`NautilusModule::register`] from the function passed to
 /// [`crate::nautilus_module!`].
 pub struct NautilusModule {
-    #[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
     module: *mut GTypeModule,
-    #[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
     name: Cow<'static, str>,
     column_provider_iface_infos: Vec<GInterfaceInfo>,
     file_info_iface_infos: Vec<GInterfaceInfo>,
@@ -89,7 +75,6 @@ enum ProviderReservation {
     Column(usize),
     FileInfo(usize),
     Info(usize),
-    #[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
     MenuItemActivate(usize),
     Menu(usize),
     PropertiesModel(usize),

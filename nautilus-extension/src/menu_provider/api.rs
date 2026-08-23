@@ -126,16 +126,9 @@ pub struct MenuProviderHandle {
 }
 
 impl MenuProviderHandle {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusMenuProvider` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_menu_provider_get_type() }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusMenuProvider` GType.
-    pub fn type_() -> GType {
-        0
     }
 
     /// # Safety
@@ -184,7 +177,6 @@ impl MenuProviderHandle {
         raw
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Emits Nautilus' `items-updated` signal for this provider.
     pub fn emit_items_updated_signal(&self) {
         unsafe {
@@ -192,11 +184,6 @@ impl MenuProviderHandle {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Emits Nautilus' `items-updated` signal for this provider.
-    pub fn emit_items_updated_signal(&self) {}
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Connects a callback to Nautilus' `items-updated` signal.
     pub fn connect_items_updated<F>(&self, callback: F) -> Option<SignalHandlerId>
     where
@@ -232,16 +219,6 @@ impl MenuProviderHandle {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Connects a callback to Nautilus' `items-updated` signal.
-    pub fn connect_items_updated<F>(&self, _callback: F) -> Option<SignalHandlerId>
-    where
-        F: Fn(&MenuProviderHandle) + 'static,
-    {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Disconnects a signal handler previously connected on this provider.
     pub fn disconnect_signal(&self, signal_id: SignalHandlerId) {
         unsafe {
@@ -249,11 +226,6 @@ impl MenuProviderHandle {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Disconnects a signal handler previously connected on this provider.
-    pub fn disconnect_signal(&self, _signal_id: SignalHandlerId) {}
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Calls the provider interface for selected-file menu items.
     pub fn get_file_items(&self, files: &[FileInfo]) -> Vec<MenuItemObject> {
         let mut raw_files: *mut GList = ptr::null_mut();
@@ -275,13 +247,6 @@ impl MenuProviderHandle {
             .unwrap_or_default()
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Calls the provider interface for selected-file menu items.
-    pub fn get_file_items(&self, _files: &[FileInfo]) -> Vec<MenuItemObject> {
-        Vec::new()
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Calls the provider interface for background menu items.
     pub fn get_background_items(&self, current_folder: &FileInfo) -> Vec<MenuItemObject> {
         let items =
@@ -290,12 +255,6 @@ impl MenuProviderHandle {
         unsafe { MenuItemList::from_raw_full(items) }
             .map(|items| items.items())
             .unwrap_or_default()
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Calls the provider interface for background menu items.
-    pub fn get_background_items(&self, _current_folder: &FileInfo) -> Vec<MenuItemObject> {
-        Vec::new()
     }
 
     /// Calls the provider interface for selected-file menu items.
@@ -358,16 +317,9 @@ impl Menu {
         &self.menu_items
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Builds the corresponding native `NautilusMenu` object.
     pub fn to_object(&self, target: &MenuActivationTarget) -> Option<MenuObject> {
         unsafe { MenuObject::from_raw_full(self.to_raw(target)) }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Builds the corresponding native `NautilusMenu` object.
-    pub fn to_object(&self, _target: &MenuActivationTarget) -> Option<MenuObject> {
-        None
     }
 
     pub(crate) fn to_g_list(&self, target: &MenuActivationTarget) -> *mut GList {
@@ -384,7 +336,6 @@ impl Menu {
         raw_file_items
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     pub(crate) fn to_raw(&self, target: &MenuActivationTarget) -> *mut NautilusMenu {
         let raw_menu = unsafe { nautilus_menu_new() };
 
@@ -402,11 +353,5 @@ impl Menu {
         }
 
         raw_menu
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    #[allow(dead_code)]
-    pub(crate) fn to_raw(&self, _target: &MenuActivationTarget) -> *mut NautilusMenu {
-        ptr::null_mut()
     }
 }

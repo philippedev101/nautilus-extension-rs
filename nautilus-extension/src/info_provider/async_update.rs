@@ -219,7 +219,6 @@ impl OperationState {
         self.main_context as *mut GMainContext
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     fn raw_handle(&self) -> *mut NautilusOperationHandle {
         self.raw_handle.load(Ordering::SeqCst) as *mut NautilusOperationHandle
     }
@@ -227,14 +226,12 @@ impl OperationState {
 
 type UpdateFileInfoFn = Box<dyn FnOnce(&mut FileInfo) + Send + 'static>;
 
-#[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
 pub(crate) struct CompletionSource {
     pub(crate) state: Arc<OperationState>,
     pub(crate) result: OperationResult,
     pub(crate) update_file_info: Option<UpdateFileInfoFn>,
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolean {
     if data.is_null() {
         return GFALSE;
@@ -289,7 +286,6 @@ pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolea
     GFALSE
 }
 
-#[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
 pub(crate) unsafe extern "C" fn destroy_completion_source(data: gpointer) {
     if !data.is_null() {
         let _ = catch_unwind(AssertUnwindSafe(|| {
@@ -298,7 +294,6 @@ pub(crate) unsafe extern "C" fn destroy_completion_source(data: gpointer) {
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) fn ref_main_context_for_source(state: &OperationState) -> Option<*mut GMainContext> {
     let _guard = state.cleanup_lock.lock().ok()?;
 
@@ -314,7 +309,6 @@ pub(crate) fn ref_main_context_for_source(state: &OperationState) -> Option<*mut
     }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) fn schedule_completion_source(source_data: CompletionSource) -> bool {
     let context = match ref_main_context_for_source(&source_data.state) {
         Some(context) => context,
@@ -345,11 +339,6 @@ pub(crate) fn schedule_completion_source(source_data: CompletionSource) -> bool 
     }
 
     true
-}
-
-#[cfg(nautilus_extension_rs_skip_link)]
-pub(crate) fn schedule_completion_source(_source_data: CompletionSource) -> bool {
-    false
 }
 
 lazy_static! {
@@ -473,7 +462,6 @@ pub(crate) fn bool_to_gboolean(value: bool) -> gboolean {
     }
 }
 
-#[cfg_attr(nautilus_extension_rs_skip_link, allow(dead_code))]
 pub(crate) fn operation_handle_for_update_result(
     result: OperationResult,
     raw_handle: *mut NautilusOperationHandle,

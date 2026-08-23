@@ -7,28 +7,14 @@ pub struct MenuObject {
 }
 
 impl MenuObject {
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the registered `NautilusMenu` GType.
     pub fn type_() -> GType {
         unsafe { nautilus_menu_get_type() }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the registered `NautilusMenu` GType.
-    pub fn type_() -> GType {
-        0
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Creates an empty native `NautilusMenu` object.
     pub fn new() -> Option<MenuObject> {
         unsafe { MenuObject::from_raw_full(nautilus_menu_new()) }
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Creates an empty native `NautilusMenu` object.
-    pub fn new() -> Option<MenuObject> {
-        None
     }
 
     /// # Safety
@@ -76,7 +62,6 @@ impl MenuObject {
         raw
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Appends an item to this native menu.
     pub fn append_item(&self, item: &MenuItemObject) {
         unsafe {
@@ -84,11 +69,6 @@ impl MenuObject {
         }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Appends an item to this native menu.
-    pub fn append_item(&self, _item: &MenuItemObject) {}
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Returns the native menu items currently in this menu.
     pub fn get_items(&self) -> Vec<MenuItemObject> {
         let items = unsafe { nautilus_menu_get_items(self.raw) };
@@ -96,12 +76,6 @@ impl MenuObject {
         unsafe { MenuItemList::from_raw_full(items) }
             .map(|items| items.items())
             .unwrap_or_default()
-    }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Returns the native menu items currently in this menu.
-    pub fn get_items(&self) -> Vec<MenuItemObject> {
-        Vec::new()
     }
 
     /// Returns the native menu items currently in this menu.
@@ -182,7 +156,6 @@ impl MenuItemList {
 impl Drop for MenuItemList {
     fn drop(&mut self) {
         if !self.raw.is_null() {
-            #[cfg(not(nautilus_extension_rs_skip_link))]
             unsafe {
                 nautilus_menu_item_list_free(self.raw);
             }
@@ -342,19 +315,11 @@ impl MenuItem {
         self.submenu.as_ref()
     }
 
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     /// Builds the corresponding native `NautilusMenuItem` object.
     pub fn to_object(&self, target: &MenuActivationTarget) -> Option<MenuItemObject> {
         unsafe { MenuItemObject::from_raw_full(self.to_raw(target)?) }
     }
 
-    #[cfg(nautilus_extension_rs_skip_link)]
-    /// Builds the corresponding native `NautilusMenuItem` object.
-    pub fn to_object(&self, _target: &MenuActivationTarget) -> Option<MenuItemObject> {
-        None
-    }
-
-    #[cfg(not(nautilus_extension_rs_skip_link))]
     pub(crate) fn to_raw(&self, target: &MenuActivationTarget) -> Option<*mut NautilusMenuItem> {
         let name = CString::new(&self.name as &str).ok()?;
         let label = CString::new(&self.label as &str).ok()?;
@@ -398,14 +363,8 @@ impl MenuItem {
 
         Some(raw_menuitem)
     }
-
-    #[cfg(nautilus_extension_rs_skip_link)]
-    pub(crate) fn to_raw(&self, _target: &MenuActivationTarget) -> Option<*mut NautilusMenuItem> {
-        None
-    }
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 pub(crate) fn new_menu_item_raw(
     item_type: Option<MenuItemType>,
     name: &CString,

@@ -1,15 +1,12 @@
 use super::iface::*;
 use super::*;
-#[cfg(nautilus_extension_rs_skip_link)]
+use crate::test_support::{require_native_api, require_unlinked_build};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-#[cfg(nautilus_extension_rs_skip_link)]
 static GET_MODELS_CALLS: AtomicUsize = AtomicUsize::new(0);
 
-#[cfg(nautilus_extension_rs_skip_link)]
 struct RoutedPropertiesModelProvider;
 
-#[cfg(nautilus_extension_rs_skip_link)]
 impl PropertiesModelProvider for RoutedPropertiesModelProvider {
     fn get_models(&self, files: &[FileInfo]) -> Vec<PropertiesModel> {
         assert!(files.is_empty());
@@ -59,9 +56,10 @@ fn properties_object_wrappers_reject_null_raw_pointers() {
     assert!(unsafe { PropertiesModelProviderHandle::from_raw_borrowed(ptr::null_mut()) }.is_none());
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn properties_model_provider_iface_trampoline_routes_to_registered_impl() {
+    require_unlinked_build!();
+
     let _guard = crate::test_support::PROVIDER_STATE_LOCK
         .lock()
         .expect("provider-state test lock poisoned");
@@ -112,17 +110,19 @@ fn properties_model_provider_iface_trampoline_catches_provider_panics() {
     reset_properties_model_provider_state();
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
 #[test]
 fn documented_type_accessors_are_inert_in_no_link_mode() {
+    require_unlinked_build!();
+
     assert_eq!(PropertiesItemObject::type_(), 0);
     assert_eq!(PropertiesModelObject::type_(), 0);
     assert_eq!(PropertiesModelProviderHandle::type_(), 0);
 }
 
-#[cfg(not(nautilus_extension_rs_skip_link))]
 #[test]
 fn documented_type_accessors_return_registered_gtypes() {
+    require_native_api!();
+
     assert_ne!(PropertiesItemObject::type_(), 0);
     assert_ne!(PropertiesModelObject::type_(), 0);
     assert_ne!(PropertiesModelProviderHandle::type_(), 0);

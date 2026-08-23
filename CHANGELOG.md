@@ -13,6 +13,11 @@
   `cdylib` extension modules for `extensions-4`.
 * Added validation scripts, fuzz/sanitizer smoke tests, docs.rs support,
   API coverage tracking, and release documentation.
+* Replaced the per-call `nautilus_extension_rs_skip_link` cfg pairs with a
+  single set of stub definitions in `nautilus-extension-sys`, so the wrapper
+  source has one code path for both linked and unlinked builds.
+* Added the public `NATIVE_API_AVAILABLE` constant for the few places that must
+  behave differently without the native Nautilus library.
 
 ## 0.8.0 (2022-07-27)
 

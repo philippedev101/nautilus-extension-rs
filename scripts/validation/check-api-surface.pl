@@ -97,6 +97,7 @@ my @expected_sys_symbols = qw(
 );
 
 my @expected_safe_symbols = qw(
+    NATIVE_API_AVAILABLE
     Column
     ColumnObject
     ColumnProvider
