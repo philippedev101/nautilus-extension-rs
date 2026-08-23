@@ -1,10 +1,6 @@
 use crate::glib_ffi::{g_list_append, gpointer, GList, GQuark, GType};
 use crate::gobject_ffi::{g_object_ref, g_object_unref, GObject};
-use crate::gobject_utils::{
-    free_owned_g_object_list, get_bool_property, get_float_property, get_int_property,
-    get_quark_property, get_string_property, set_bool_property, set_double_property,
-    set_int_property, set_string_property,
-};
+use crate::gobject_utils::{free_owned_g_object_list, GObjectProperties};
 use crate::nautilus_ffi::{
     nautilus_column_get_type, nautilus_column_new, nautilus_column_provider_get_columns,
     nautilus_column_provider_get_type, NautilusColumn, NautilusColumnProvider,
@@ -246,83 +242,80 @@ impl ColumnObject {
 
     /// Returns the column's unique name.
     pub fn name(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "name") }
+        self.string_property("name")
     }
 
     /// Returns the file-info attribute displayed by the column.
     pub fn attribute(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "attribute") }
+        self.string_property("attribute")
     }
 
     /// Returns the interned quark for the column attribute.
     pub fn attribute_q(&self) -> GQuark {
-        unsafe { get_quark_property(self.raw as *mut GObject, COLUMN_ATTRIBUTE_Q_PROPERTY) }
+        self.quark_property(COLUMN_ATTRIBUTE_Q_PROPERTY)
     }
 
     /// Returns the user-visible column label.
     pub fn label(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "label") }
+        self.string_property("label")
     }
 
     /// Returns the user-visible column description.
     pub fn description(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "description") }
+        self.string_property("description")
     }
 
     /// Returns whether the column is visible by default.
     pub fn visible(&self) -> bool {
-        unsafe { get_bool_property(self.raw as *mut GObject, "visible") }
+        self.bool_property("visible")
     }
 
     /// Returns the horizontal alignment for column contents.
     pub fn xalign(&self) -> f32 {
-        unsafe { get_float_property(self.raw as *mut GObject, "xalign") }
+        self.float_property("xalign")
     }
 
     /// Returns the default sort order.
     pub fn default_sort_order(&self) -> ColumnSortOrder {
-        unsafe {
-            ColumnSortOrder::from_sort_type(get_int_property(
-                self.raw as *mut GObject,
-                "default-sort-order",
-            ))
-        }
+        ColumnSortOrder::from_sort_type(self.int_property("default-sort-order"))
     }
 
     /// Sets the file-info attribute displayed by the column.
     pub fn set_attribute(&self, attribute: &str) -> bool {
-        unsafe { set_string_property(self.raw as *mut GObject, "attribute", attribute) }
+        self.set_string_property("attribute", attribute)
     }
 
     /// Sets the user-visible column label.
     pub fn set_label(&self, label: &str) -> bool {
-        unsafe { set_string_property(self.raw as *mut GObject, "label", label) }
+        self.set_string_property("label", label)
     }
 
     /// Sets the user-visible column description.
     pub fn set_description(&self, description: &str) -> bool {
-        unsafe { set_string_property(self.raw as *mut GObject, "description", description) }
+        self.set_string_property("description", description)
     }
 
     /// Sets whether the column is visible by default.
     pub fn set_visible(&self, visible: bool) -> bool {
-        unsafe { set_bool_property(self.raw as *mut GObject, "visible", visible) }
+        self.set_bool_property("visible", visible)
     }
 
     /// Sets the horizontal alignment for column contents.
     pub fn set_xalign(&self, xalign: f32) -> bool {
-        unsafe { set_double_property(self.raw as *mut GObject, "xalign", xalign as f64) }
+        self.set_double_property("xalign", xalign as f64)
     }
 
     /// Sets the default sort order.
     pub fn set_default_sort_order(&self, sort_order: ColumnSortOrder) -> bool {
-        unsafe {
-            set_int_property(
-                self.raw as *mut GObject,
-                "default-sort-order",
-                sort_order.to_sort_type(),
-            )
-        }
+        self.set_int_property("default-sort-order", sort_order.to_sort_type())
+    }
+}
+
+// SAFETY: `raw` is null or a `NautilusColumn` this wrapper owns a reference to,
+// so it stays a live GObject for as long as the wrapper is borrowed.
+unsafe impl GObjectProperties for ColumnObject {
+    fn as_gobject(&self) -> *mut GObject {
+        self.raw as *mut GObject
     }
 }
 

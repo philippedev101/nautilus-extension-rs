@@ -197,3 +197,93 @@ pub unsafe fn get_object_property<T>(object: *mut GObject, property: &str) -> Op
         Some(value)
     }
 }
+
+/// Safe GObject property access for the owned object wrappers.
+///
+/// The wrappers all hold a raw GObject pointer and all read and write
+/// properties the same way, which previously meant an `unsafe` block at every
+/// accessor. Implementing this states the invariant once instead, and every
+/// method below is then safe to call.
+///
+/// # Safety
+///
+/// [`GObjectProperties::as_gobject`] must return either null or a pointer to a
+/// live GObject that stays valid for the borrow of `self`. Null is allowed
+/// because the wrappers are constructible from raw pointers; the accessors
+/// below reject it rather than handing it to GLib.
+pub(crate) unsafe trait GObjectProperties {
+    /// Returns the wrapped object as a raw GObject pointer.
+    fn as_gobject(&self) -> *mut GObject;
+
+    fn string_property(&self, property: &str) -> Option<String> {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return None;
+        }
+        unsafe { get_string_property(object, property) }
+    }
+
+    fn set_string_property(&self, property: &str, value: &str) -> bool {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return false;
+        }
+        unsafe { set_string_property(object, property, value) }
+    }
+
+    fn bool_property(&self, property: &str) -> bool {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return false;
+        }
+        unsafe { get_bool_property(object, property) }
+    }
+
+    fn set_bool_property(&self, property: &str, value: bool) -> bool {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return false;
+        }
+        unsafe { set_bool_property(object, property, value) }
+    }
+
+    fn float_property(&self, property: &str) -> c_float {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return 0.0;
+        }
+        unsafe { get_float_property(object, property) }
+    }
+
+    fn set_double_property(&self, property: &str, value: c_double) -> bool {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return false;
+        }
+        unsafe { set_double_property(object, property, value) }
+    }
+
+    fn int_property(&self, property: &str) -> c_int {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return 0;
+        }
+        unsafe { get_int_property(object, property) }
+    }
+
+    fn set_int_property(&self, property: &str, value: c_int) -> bool {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return false;
+        }
+        unsafe { set_int_property(object, property, value) }
+    }
+
+    fn quark_property(&self, property: &str) -> GQuark {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return 0;
+        }
+        unsafe { get_quark_property(object, property) }
+    }
+}
