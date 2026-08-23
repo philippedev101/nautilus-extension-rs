@@ -27,8 +27,11 @@ impl PropertiesItem {
         let name = CString::new(&self.name as &str).ok()?;
         let value = CString::new(&self.value as &str).ok()?;
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         let item = unsafe { nautilus_properties_item_new(name.as_ptr(), value.as_ptr()) };
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { PropertiesItemObject::from_raw_full(item) }
     }
 
@@ -71,6 +74,8 @@ impl PropertiesModel {
         }
 
         let title = CString::new(&self.title as &str).ok()?;
+        // SAFETY: the item type is a registered GType, which is what `g_list_store_new`
+        // requires.
         let store = unsafe { g_list_store_new(nautilus_properties_item_get_type()) };
 
         if store.is_null() {
@@ -79,6 +84,8 @@ impl PropertiesModel {
 
         for item in &self.items {
             if let Some(raw_item) = item.to_raw() {
+                // SAFETY: the list model is the one built here and the element type
+                // matches.
                 unsafe {
                     g_list_store_append(store, raw_item as *mut GObject);
                     g_object_unref(raw_item as *mut GObject);
@@ -87,12 +94,17 @@ impl PropertiesModel {
         }
 
         let model =
+            // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
             unsafe { nautilus_properties_model_new(title.as_ptr(), store as *mut GListModel) };
 
+        // SAFETY: the wrapper owns the reference being released and does not use the
+        // pointer again.
         unsafe {
             g_object_unref(store as *mut GObject);
         }
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { PropertiesModelObject::from_raw_full(model) }
     }
 
@@ -110,6 +122,8 @@ pub struct PropertiesItemObject {
 impl PropertiesItemObject {
     /// Returns the registered `NautilusPropertiesItem` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_properties_item_get_type() }
     }
 
@@ -122,6 +136,8 @@ impl PropertiesItemObject {
         let name = CString::new(name.as_ref()).ok()?;
         let value = CString::new(value.as_ref()).ok()?;
 
+        // SAFETY: the string arguments are NUL-terminated and live across the call, and the
+        // constructor returns a transfer-full reference the wrapper takes ownership of.
         unsafe {
             PropertiesItemObject::from_raw_full(nautilus_properties_item_new(
                 name.as_ptr(),
@@ -142,6 +158,8 @@ impl PropertiesItemObject {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut RawGObject);
         }
@@ -201,6 +219,8 @@ unsafe impl NautilusObject for PropertiesItemObject {
 
 impl Clone for PropertiesItemObject {
     fn clone(&self) -> PropertiesItemObject {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut RawGObject);
         }
@@ -212,6 +232,8 @@ impl Clone for PropertiesItemObject {
 impl Drop for PropertiesItemObject {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut RawGObject);
             }
@@ -228,6 +250,8 @@ pub struct PropertiesModelObject {
 impl PropertiesModelObject {
     /// Returns the registered `NautilusPropertiesModel` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_properties_model_get_type() }
     }
 
@@ -238,6 +262,8 @@ impl PropertiesModelObject {
     ) -> Option<PropertiesModelObject> {
         let title = CString::new(title.as_ref()).ok()?;
 
+        // SAFETY: the string arguments are NUL-terminated and live across the call, and the
+        // constructor returns a transfer-full reference the wrapper takes ownership of.
         unsafe {
             PropertiesModelObject::from_raw_full(nautilus_properties_model_new(
                 title.as_ptr(),
@@ -258,6 +284,8 @@ impl PropertiesModelObject {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut RawGObject);
         }
@@ -324,6 +352,7 @@ impl PropertiesModelObject {
 
         let mut items = Vec::new();
 
+        // SAFETY: the list model is the one built here and the element type matches.
         unsafe {
             let len = g_list_model_get_n_items(model.as_ptr());
             for index in 0..len {
@@ -352,6 +381,8 @@ unsafe impl NautilusObject for PropertiesModelObject {
 
 impl Clone for PropertiesModelObject {
     fn clone(&self) -> PropertiesModelObject {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut RawGObject);
         }
@@ -363,6 +394,8 @@ impl Clone for PropertiesModelObject {
 impl Drop for PropertiesModelObject {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut RawGObject);
             }

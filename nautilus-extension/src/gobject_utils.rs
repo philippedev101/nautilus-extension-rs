@@ -7,6 +7,8 @@ use std::ptr;
 
 pub unsafe extern "C" fn unref_g_object(data: gpointer) {
     if !data.is_null() {
+        // SAFETY: the wrapper owns the reference being released and does not use the
+        // pointer again.
         unsafe {
             g_object_unref(data as *mut GObject);
         }
@@ -15,6 +17,8 @@ pub unsafe extern "C" fn unref_g_object(data: gpointer) {
 
 pub unsafe fn free_owned_g_object_list(list: *mut GList) {
     if !list.is_null() {
+        // SAFETY: `list` is non-null and owned here, and `unref_g_object` matches its
+        // element type.
         unsafe {
             g_list_free_full(list, Some(unref_g_object));
         }
@@ -51,6 +55,8 @@ pub(crate) unsafe trait GObjectProperties {
     fn string_property(&self, property: &str) -> Option<String> {
         let (object, property) = self.property_target(property)?;
         let mut value: *mut c_char = ptr::null_mut();
+        // SAFETY: the object came from `property_target`, which rejected null, and
+        // `property` is NUL-terminated with an out-param matching its type.
         unsafe {
             g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
             take_glib_string(value)
@@ -64,6 +70,8 @@ pub(crate) unsafe trait GObjectProperties {
         let Ok(value) = CString::new(value) else {
             return false;
         };
+        // SAFETY: the object came from `property_target`, which rejected null, and the name
+        // and value are NUL-terminated and match the property type.
         unsafe {
             g_object_set(
                 object,
@@ -86,6 +94,8 @@ pub(crate) unsafe trait GObjectProperties {
             },
             None => None,
         };
+        // SAFETY: the object came from `property_target`, which rejected null, and the name
+        // and value are NUL-terminated and match the property type.
         unsafe {
             g_object_set(
                 object,
@@ -105,6 +115,8 @@ pub(crate) unsafe trait GObjectProperties {
             return false;
         };
         let mut value: gboolean = GFALSE;
+        // SAFETY: the object came from `property_target`, which rejected null, and
+        // `property` is NUL-terminated with an out-param matching its type.
         unsafe {
             g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
@@ -115,6 +127,8 @@ pub(crate) unsafe trait GObjectProperties {
         let Some((object, property)) = self.property_target(property) else {
             return false;
         };
+        // SAFETY: the object came from `property_target`, which rejected null, and the name
+        // and value are NUL-terminated and match the property type.
         unsafe {
             g_object_set(
                 object,
@@ -131,6 +145,8 @@ pub(crate) unsafe trait GObjectProperties {
             return 0.0;
         };
         let mut value: c_float = 0.0;
+        // SAFETY: the object came from `property_target`, which rejected null, and
+        // `property` is NUL-terminated with an out-param matching its type.
         unsafe {
             g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
@@ -141,6 +157,8 @@ pub(crate) unsafe trait GObjectProperties {
         let Some((object, property)) = self.property_target(property) else {
             return false;
         };
+        // SAFETY: the object came from `property_target`, which rejected null, and the name
+        // and value are NUL-terminated and match the property type.
         unsafe {
             g_object_set(object, property.as_ptr(), value, ptr::null::<c_char>());
         }
@@ -152,6 +170,8 @@ pub(crate) unsafe trait GObjectProperties {
             return 0;
         };
         let mut value: c_int = 0;
+        // SAFETY: the object came from `property_target`, which rejected null, and
+        // `property` is NUL-terminated with an out-param matching its type.
         unsafe {
             g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
@@ -162,6 +182,8 @@ pub(crate) unsafe trait GObjectProperties {
         let Some((object, property)) = self.property_target(property) else {
             return false;
         };
+        // SAFETY: the object came from `property_target`, which rejected null, and the name
+        // and value are NUL-terminated and match the property type.
         unsafe {
             g_object_set(object, property.as_ptr(), value, ptr::null::<c_char>());
         }
@@ -173,6 +195,8 @@ pub(crate) unsafe trait GObjectProperties {
             return 0;
         };
         let mut value: GQuark = 0;
+        // SAFETY: the object came from `property_target`, which rejected null, and
+        // `property` is NUL-terminated with an out-param matching its type.
         unsafe {
             g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
@@ -182,6 +206,8 @@ pub(crate) unsafe trait GObjectProperties {
     fn object_property<T>(&self, property: &str) -> Option<*mut T> {
         let (object, property) = self.property_target(property)?;
         let mut value: *mut T = ptr::null_mut();
+        // SAFETY: the object came from `property_target`, which rejected null, and
+        // `property` is NUL-terminated with an out-param matching its type.
         unsafe {
             g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
@@ -227,6 +253,8 @@ pub(crate) unsafe trait NautilusObject {
         if raw.is_null() {
             return None;
         }
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`, and
+        // `get` is transfer-full.
         unsafe { take_glib_string(get(raw)) }
     }
 
@@ -242,6 +270,8 @@ pub(crate) unsafe trait NautilusObject {
         if raw.is_null() {
             return None;
         }
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`, and
+        // `get` is transfer-none.
         unsafe { borrowed_string(get(raw)) }
     }
 
@@ -251,6 +281,7 @@ pub(crate) unsafe trait NautilusObject {
         if raw.is_null() {
             return false;
         }
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`.
         unsafe { get(raw) != GFALSE }
     }
 
@@ -265,6 +296,7 @@ pub(crate) unsafe trait NautilusObject {
         if raw.is_null() {
             return fallback;
         }
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`.
         unsafe { get(raw) }
     }
 
@@ -274,6 +306,7 @@ pub(crate) unsafe trait NautilusObject {
         if raw.is_null() {
             return ptr::null_mut();
         }
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`.
         unsafe { get(raw) }
     }
 
@@ -290,6 +323,8 @@ pub(crate) unsafe trait NautilusObject {
             return None;
         }
         let argument = CString::new(argument).ok()?;
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`;
+        // `argument` is NUL-terminated and `get` is transfer-full.
         unsafe { take_glib_string(get(raw, argument.as_ptr())) }
     }
 
@@ -306,6 +341,7 @@ pub(crate) unsafe trait NautilusObject {
         let Ok(argument) = CString::new(argument) else {
             return false;
         };
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`.
         unsafe { get(raw, argument.as_ptr()) != GFALSE }
     }
 
@@ -325,6 +361,7 @@ pub(crate) unsafe trait NautilusObject {
         let Ok(argument) = CString::new(argument) else {
             return false;
         };
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`.
         unsafe { call(raw, argument.as_ptr()) }
         true
     }
@@ -335,6 +372,7 @@ pub(crate) unsafe trait NautilusObject {
         if raw.is_null() {
             return;
         }
+        // SAFETY: `raw` is non-null and the trait contract makes it a live `Self::Raw`.
         unsafe { call(raw) }
     }
 }

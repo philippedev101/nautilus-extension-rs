@@ -8,6 +8,8 @@ macro_rules! info_provider_iface {
         /// Use `NautilusModule.add_info_provider()` instead.
         pub(crate) unsafe extern "C" fn $iface_init_fn(iface: gpointer, _: gpointer) {
             let iface_struct = iface as *mut NautilusInfoProviderIface;
+            // SAFETY: GObject calls this with a pointer to the vtable being initialised,
+            // valid for the duration of the call.
             unsafe {
                 (*iface_struct).update_file_info = Some($update_file_info_fn);
                 (*iface_struct).cancel_update = Some($cancel_update_fn);
@@ -56,6 +58,7 @@ macro_rules! info_provider_iface {
                     return OperationResult::Failed.into();
                 }
 
+                // SAFETY: Nautilus supplies `handle` as an out-parameter of this call.
                 unsafe {
                     *handle = raw_handle;
                 }

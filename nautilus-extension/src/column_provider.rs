@@ -18,8 +18,8 @@ use std::sync::{Arc, Mutex};
 
 const COLUMN_ATTRIBUTE_Q_PROPERTY: &str = "attribute-q";
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 /// Sort direction values accepted by Nautilus column metadata.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ColumnSortOrder {
     /// Sort ascending by default.
     Ascending,
@@ -125,6 +125,8 @@ impl Column {
         let label = CString::new(&self.label as &str).ok()?;
         let description = CString::new(&self.description as &str).ok()?;
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the
+        // arguments outlive the call.
         let column = unsafe {
             nautilus_column_new(
                 name.as_ptr(),
@@ -138,6 +140,8 @@ impl Column {
             return None;
         }
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         let column = unsafe { ColumnObject::from_raw_full(column) }?;
 
         if let Some(visible) = self.visible {
@@ -169,6 +173,8 @@ pub struct ColumnObject {
 impl ColumnObject {
     /// Returns the registered `NautilusColumn` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_column_get_type() }
     }
 
@@ -185,6 +191,8 @@ impl ColumnObject {
         let label = CString::new(label.as_ref()).ok()?;
         let description = CString::new(description.as_ref()).ok()?;
 
+        // SAFETY: the string arguments are NUL-terminated and live across the call, and the
+        // constructor returns a transfer-full reference the wrapper takes ownership of.
         unsafe {
             ColumnObject::from_raw_full(nautilus_column_new(
                 name.as_ptr(),
@@ -205,6 +213,8 @@ impl ColumnObject {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }
@@ -321,6 +331,8 @@ unsafe impl GObjectProperties for ColumnObject {
 
 impl Clone for ColumnObject {
     fn clone(&self) -> ColumnObject {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut GObject);
         }
@@ -332,6 +344,8 @@ impl Clone for ColumnObject {
 impl Drop for ColumnObject {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut GObject);
             }
@@ -380,6 +394,8 @@ pub struct ColumnProviderHandle {
 impl ColumnProviderHandle {
     /// Returns the registered `NautilusColumnProvider` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_column_provider_get_type() }
     }
 
@@ -408,6 +424,8 @@ impl ColumnProviderHandle {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }
@@ -433,13 +451,17 @@ impl ColumnProviderHandle {
 
     /// Calls the provider interface and returns native column objects.
     pub fn get_columns(&self) -> Vec<ColumnObject> {
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         let columns = unsafe { nautilus_column_provider_get_columns(self.raw) };
+        // SAFETY: `columns` is the GList the provider interface just returned, whose
+        // elements are `NautilusColumn` objects that stay alive until it is freed.
         let vec = unsafe {
             vec_from_g_list(columns, |data| {
                 ColumnObject::from_raw_borrowed(data as *mut NautilusColumn)
             })
         };
 
+        // SAFETY: the list came from the call just made and its elements are owned here.
         unsafe {
             free_owned_g_object_list(columns);
         }
@@ -457,6 +479,8 @@ impl ColumnProviderHandle {
 
 impl Clone for ColumnProviderHandle {
     fn clone(&self) -> ColumnProviderHandle {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut GObject);
         }
@@ -468,6 +492,8 @@ impl Clone for ColumnProviderHandle {
 impl Drop for ColumnProviderHandle {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut GObject);
             }
@@ -483,6 +509,8 @@ macro_rules! column_provider_iface {
         /// Use `NautilusModule.add_column_provider()` instead.
         unsafe extern "C" fn $iface_init_fn(iface: gpointer, _: gpointer) {
             let iface_struct = iface as *mut NautilusColumnProviderIface;
+            // SAFETY: GObject calls this with a pointer to the vtable being initialised,
+            // valid for the duration of the call.
             unsafe {
                 (*iface_struct).get_columns = Some($get_columns_fn);
             }
@@ -506,6 +534,8 @@ macro_rules! column_provider_iface {
 
             for column in columns {
                 if let Some(column) = column.to_raw() {
+                    // SAFETY: the list is the one this function is building and the
+                    // appended pointer outlives the call.
                     unsafe {
                         columns_g_list = g_list_append(columns_g_list, column as *mut c_void);
                     }
@@ -666,6 +696,9 @@ pub fn reset_column_provider_state() {
 
 #[cfg(test)]
 mod tests {
+    // Tests deliberately build wrappers around bogus or null pointers to exercise
+    // the guards that reject them; see the note in the provider test modules.
+    #![allow(clippy::undocumented_unsafe_blocks)]
     use super::*;
     use crate::test_support::{require_native_api, require_unlinked_build};
     use std::sync::atomic::Ordering;
@@ -733,9 +766,17 @@ mod tests {
 
     #[test]
     fn column_object_rejects_null_raw_pointers() {
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         assert!(unsafe { ColumnObject::from_raw_full(ptr::null_mut()) }.is_none());
+        // SAFETY: Nautilus owns this pointer for the duration of the call, and
+        // `from_raw_borrowed` rejects null and takes its own reference.
         assert!(unsafe { ColumnObject::from_raw_borrowed(ptr::null_mut()) }.is_none());
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         assert!(unsafe { ColumnProviderHandle::from_raw_full(ptr::null_mut()) }.is_none());
+        // SAFETY: Nautilus owns this pointer for the duration of the call, and
+        // `from_raw_borrowed` rejects null and takes its own reference.
         assert!(unsafe { ColumnProviderHandle::from_raw_borrowed(ptr::null_mut()) }.is_none());
     }
 

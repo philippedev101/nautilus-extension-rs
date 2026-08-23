@@ -8,6 +8,8 @@ macro_rules! properties_model_provider_iface {
         /// Use `NautilusModule.add_properties_model_provider()` instead.
         pub(crate) unsafe extern "C" fn $iface_init_fn(iface: gpointer, _: gpointer) {
             let iface_struct = iface as *mut NautilusPropertiesModelProviderIface;
+            // SAFETY: GObject calls this with a pointer to the vtable being initialised,
+            // valid for the duration of the call.
             unsafe {
                 (*iface_struct).get_models = Some($get_models_fn);
             }
@@ -35,6 +37,8 @@ macro_rules! properties_model_provider_iface {
 
             for model in models {
                 if let Some(raw_model) = model.to_raw() {
+                    // SAFETY: the list is the one this function is building and the
+                    // appended pointer outlives the call.
                     unsafe {
                         models_g_list = g_list_append(models_g_list, raw_model as *mut c_void);
                     }

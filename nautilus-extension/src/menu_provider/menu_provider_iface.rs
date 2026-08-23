@@ -8,6 +8,8 @@ macro_rules! menu_provider_iface {
         /// Use `NautilusModule.add_menu_provider()` instead.
         pub(crate) unsafe extern "C" fn $iface_init_fn(iface: gpointer, _: gpointer) {
             let iface_struct = iface as *mut NautilusMenuProviderIface;
+            // SAFETY: GObject calls this with a pointer to the vtable being initialised,
+            // valid for the duration of the call.
             unsafe {
                 (*iface_struct).get_file_items = Some($get_file_items_fn);
                 (*iface_struct).get_background_items = Some($get_background_items_fn);
@@ -24,6 +26,8 @@ macro_rules! menu_provider_iface {
             catch_unwind(AssertUnwindSafe(|| {
                 let files_vec = file_info_vec_from_g_list(files);
                 let target = MenuActivationTarget::Files(files_vec.clone());
+                // SAFETY: Nautilus owns this pointer for the duration of the call, and
+                // `from_raw_borrowed` rejects null and takes its own reference.
                 let handle = unsafe { MenuProviderHandle::from_raw_borrowed(provider) };
                 let rust_provider = $rust_provider
                     .lock()
@@ -60,11 +64,15 @@ macro_rules! menu_provider_iface {
             current_folder: *mut NautilusFileInfo,
         ) -> *mut GList {
             catch_unwind(AssertUnwindSafe(|| {
+                // SAFETY: Nautilus owns this pointer for the duration of the call, and
+                // `from_raw_borrowed` rejects null and takes its own reference.
                 let current_folder = match unsafe { FileInfo::from_raw_borrowed(current_folder) } {
                     Some(current_folder) => current_folder,
                     None => return ptr::null_mut(),
                 };
                 let target = MenuActivationTarget::Background(current_folder.clone());
+                // SAFETY: Nautilus owns this pointer for the duration of the call, and
+                // `from_raw_borrowed` rejects null and takes its own reference.
                 let handle = unsafe { MenuProviderHandle::from_raw_borrowed(provider) };
                 let rust_provider = $rust_provider
                     .lock()

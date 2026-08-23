@@ -14,6 +14,8 @@ pub enum OperationResult {
 impl OperationResult {
     /// Returns the registered `NautilusOperationResult` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_operation_result_get_type() }
     }
 }
@@ -154,6 +156,8 @@ pub struct InfoProviderHandle {
 impl InfoProviderHandle {
     /// Returns the registered `NautilusInfoProvider` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_info_provider_get_type() }
     }
 
@@ -180,6 +184,8 @@ impl InfoProviderHandle {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }
@@ -219,6 +225,8 @@ impl InfoProviderHandle {
         update_complete: *mut GClosure,
     ) -> (OperationResult, Option<OperationHandle>) {
         let mut raw_handle: *mut NautilusOperationHandle = ptr::null_mut();
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the
+        // arguments outlive the call.
         let result = unsafe {
             nautilus_info_provider_update_file_info(
                 self.raw,
@@ -245,6 +253,7 @@ impl InfoProviderHandle {
         file: &FileInfo,
         update_complete: &UpdateCompleteCallback,
     ) -> (OperationResult, Option<OperationHandle>) {
+        // SAFETY: the caller upholds the contract documented on `update_file_info_raw`.
         unsafe { self.update_file_info_raw(file, update_complete.raw()) }
     }
 
@@ -255,6 +264,7 @@ impl InfoProviderHandle {
             return;
         }
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_info_provider_cancel_update(self.raw, raw);
         }
@@ -263,6 +273,8 @@ impl InfoProviderHandle {
 
 impl Clone for InfoProviderHandle {
     fn clone(&self) -> InfoProviderHandle {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut GObject);
         }
@@ -274,6 +286,8 @@ impl Clone for InfoProviderHandle {
 impl Drop for InfoProviderHandle {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut GObject);
             }
@@ -303,6 +317,7 @@ impl UpdateCompleteCallback {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this closure.
         unsafe {
             g_closure_ref(raw);
         }
@@ -359,6 +374,8 @@ impl UpdateCompleteCallback {
             return false;
         }
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the
+        // arguments outlive the call.
         unsafe {
             nautilus_info_provider_update_complete_invoke(
                 self.raw,
@@ -373,6 +390,7 @@ impl UpdateCompleteCallback {
 
 impl Clone for UpdateCompleteCallback {
     fn clone(&self) -> UpdateCompleteCallback {
+        // SAFETY: the wrapper holds a live reference to this closure.
         unsafe {
             g_closure_ref(self.raw);
         }
@@ -384,6 +402,7 @@ impl Clone for UpdateCompleteCallback {
 impl Drop for UpdateCompleteCallback {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the closure reference being released.
             unsafe {
                 g_closure_unref(self.raw);
             }

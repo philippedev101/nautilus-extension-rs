@@ -1,3 +1,4 @@
+#![warn(clippy::undocumented_unsafe_blocks)]
 #![deny(bare_trait_objects)]
 #![allow(non_camel_case_types)]
 #![warn(missing_docs)]

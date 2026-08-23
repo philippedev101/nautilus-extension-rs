@@ -32,6 +32,8 @@ macro_rules! file_info_iface {
         /// Use `NautilusModule.add_file_info()` instead.
         pub(crate) unsafe extern "C" fn $iface_init_fn(iface: gpointer, _: gpointer) {
             let iface_struct = iface as *mut NautilusFileInfoInterface;
+            // SAFETY: GObject calls this with a pointer to the vtable being initialised,
+            // valid for the duration of the call.
             unsafe {
                 (*iface_struct).is_gone = Some($is_gone_fn);
                 (*iface_struct).get_name = Some($get_name_fn);
@@ -144,6 +146,8 @@ macro_rules! file_info_iface {
             file_info: *mut NautilusFileInfo,
             mime_type: *const c_char,
         ) -> gboolean {
+            // SAFETY: Nautilus passes either null or a NUL-terminated C string, and
+            // `c_string_arg` handles both.
             let mime_type = match unsafe { c_string_arg(mime_type) } {
                 Some(mime_type) => mime_type,
                 None => return GFALSE,
@@ -178,6 +182,8 @@ macro_rules! file_info_iface {
             file_info: *mut NautilusFileInfo,
             emblem_name: *const c_char,
         ) {
+            // SAFETY: Nautilus passes either null or a NUL-terminated C string, and
+            // `c_string_arg` handles both.
             let emblem_name = match unsafe { c_string_arg(emblem_name) } {
                 Some(emblem_name) => emblem_name,
                 None => return,
@@ -195,6 +201,8 @@ macro_rules! file_info_iface {
             file_info: *mut NautilusFileInfo,
             attribute_name: *const c_char,
         ) -> *mut c_char {
+            // SAFETY: Nautilus passes either null or a NUL-terminated C string, and
+            // `c_string_arg` handles both.
             let attribute_name = match unsafe { c_string_arg(attribute_name) } {
                 Some(attribute_name) => attribute_name,
                 None => return ptr::null_mut(),
@@ -216,10 +224,14 @@ macro_rules! file_info_iface {
             attribute_name: *const c_char,
             value: *const c_char,
         ) {
+            // SAFETY: Nautilus passes either null or a NUL-terminated C string, and
+            // `c_string_arg` handles both.
             let attribute_name = match unsafe { c_string_arg(attribute_name) } {
                 Some(attribute_name) => attribute_name,
                 None => return,
             };
+            // SAFETY: Nautilus passes either null or a NUL-terminated C string, and
+            // `c_string_arg` handles both.
             let value = match unsafe { c_string_arg(value) } {
                 Some(value) => value,
                 None => return,

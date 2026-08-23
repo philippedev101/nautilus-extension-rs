@@ -25,6 +25,8 @@
 * Moved GObject property and Nautilus getter access behind two internal safe
   accessor traits. Accessors on a wrapper built from a null pointer now return
   a neutral value instead of reaching GLib.
+* Required a `// SAFETY:` comment on every `unsafe` block outside test code,
+  enforced by `clippy::undocumented_unsafe_blocks`.
 
 ## 0.8.0 (2022-07-27)
 

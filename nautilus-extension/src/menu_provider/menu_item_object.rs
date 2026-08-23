@@ -9,6 +9,8 @@ pub struct MenuItemObject {
 impl MenuItemObject {
     /// Returns the registered `NautilusMenuItem` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_menu_item_get_type() }
     }
 
@@ -45,6 +47,8 @@ impl MenuItemObject {
         let tip = tip.and_then(|tip| CString::new(tip.as_ref()).ok());
         let icon = icon.and_then(|icon| CString::new(icon.as_ref()).ok());
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe {
             MenuItemObject::from_raw_full(new_menu_item_raw(
                 None,
@@ -90,6 +94,8 @@ impl MenuItemObject {
         let tip = tip.and_then(|tip| CString::new(tip.as_ref()).ok());
         let icon = icon.and_then(|icon| CString::new(icon.as_ref()).ok());
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe {
             MenuItemObject::from_raw_full(new_menu_item_raw(
                 Some(item_type),
@@ -111,6 +117,8 @@ impl MenuItemObject {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }
@@ -148,6 +156,7 @@ impl MenuItemObject {
 
     /// Activates this native menu item.
     pub fn activate(&self) {
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_menu_item_activate(self.raw);
         }
@@ -163,6 +172,8 @@ impl MenuItemObject {
             callback: Box::new(callback),
         }));
 
+        // SAFETY: the instance is the live object this wrapper owns, and the payload is
+        // paired with the destroy notify that frees it.
         let signal_id = unsafe {
             g_signal_connect_data(
                 self.raw as *mut GObject,
@@ -180,6 +191,8 @@ impl MenuItemObject {
         match SignalHandlerId::from_raw(signal_id) {
             Some(signal_id) => Some(signal_id),
             None => {
+                // SAFETY: the pointer is the one this module boxed for the callback and is
+                // dropped exactly once.
                 unsafe {
                     drop(Box::from_raw(signal_data));
                 }
@@ -190,6 +203,7 @@ impl MenuItemObject {
 
     /// Disconnects a signal handler previously connected on this item.
     pub fn disconnect_signal(&self, signal_id: SignalHandlerId) {
+        // SAFETY: the handler id came from a connect call on this same object.
         unsafe {
             g_signal_handler_disconnect(self.raw as *mut GObject, signal_id.raw());
         }
@@ -197,6 +211,7 @@ impl MenuItemObject {
 
     /// Attaches a submenu to this menu item.
     pub fn set_submenu(&self, submenu: &MenuObject) {
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_menu_item_set_submenu(self.raw, submenu.raw());
         }
@@ -318,6 +333,8 @@ unsafe impl GObjectProperties for MenuItemObject {
 
 impl Clone for MenuItemObject {
     fn clone(&self) -> MenuItemObject {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut GObject);
         }
@@ -329,6 +346,8 @@ impl Clone for MenuItemObject {
 impl Drop for MenuItemObject {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut GObject);
             }

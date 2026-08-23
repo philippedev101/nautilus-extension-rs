@@ -1,3 +1,8 @@
+// Tests deliberately build wrappers around bogus or null pointers to exercise the
+// guards that reject them. A per-block safety comment there would only restate the
+// name of the test, so the lint is off for test code and on everywhere else.
+#![allow(clippy::undocumented_unsafe_blocks)]
+
 use super::*;
 use super::{file_info_iface::*, info_provider_iface::*};
 use crate::test_support::{require_native_api, require_unlinked_build};

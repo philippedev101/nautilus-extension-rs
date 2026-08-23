@@ -9,11 +9,15 @@ pub struct MenuObject {
 impl MenuObject {
     /// Returns the registered `NautilusMenu` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_menu_get_type() }
     }
 
     /// Creates an empty native `NautilusMenu` object.
     pub fn new() -> Option<MenuObject> {
+        // SAFETY: the string arguments are NUL-terminated and live across the call, and the
+        // constructor returns a transfer-full reference the wrapper takes ownership of.
         unsafe { MenuObject::from_raw_full(nautilus_menu_new()) }
     }
 
@@ -27,6 +31,8 @@ impl MenuObject {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }
@@ -64,6 +70,7 @@ impl MenuObject {
 
     /// Appends an item to this native menu.
     pub fn append_item(&self, item: &MenuItemObject) {
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_menu_append_item(self.raw, item.raw());
         }
@@ -71,8 +78,11 @@ impl MenuObject {
 
     /// Returns the native menu items currently in this menu.
     pub fn get_items(&self) -> Vec<MenuItemObject> {
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         let items = unsafe { nautilus_menu_get_items(self.raw) };
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { MenuItemList::from_raw_full(items) }
             .map(|items| items.items())
             .unwrap_or_default()
@@ -88,6 +98,8 @@ impl MenuObject {
 
 impl Clone for MenuObject {
     fn clone(&self) -> MenuObject {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut GObject);
         }
@@ -99,6 +111,8 @@ impl Clone for MenuObject {
 impl Drop for MenuObject {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut GObject);
             }
@@ -145,6 +159,8 @@ impl MenuItemList {
 
     /// Returns the menu item objects contained in the list.
     pub fn items(&self) -> Vec<MenuItemObject> {
+        // SAFETY: `self.raw` is the `NautilusMenuItem` GList this wrapper owns, so each
+        // element is a live menu item for the duration of the walk.
         unsafe {
             vec_from_g_list(self.raw, |data| {
                 MenuItemObject::from_raw_borrowed(data as *mut NautilusMenuItem)
@@ -156,6 +172,8 @@ impl MenuItemList {
 impl Drop for MenuItemList {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the list holds `NautilusMenuItem` elements, which is what this
+            // Nautilus helper expects.
             unsafe {
                 nautilus_menu_item_list_free(self.raw);
             }
@@ -317,6 +335,8 @@ impl MenuItem {
 
     /// Builds the corresponding native `NautilusMenuItem` object.
     pub fn to_object(&self, target: &MenuActivationTarget) -> Option<MenuItemObject> {
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { MenuItemObject::from_raw_full(self.to_raw(target)?) }
     }
 
@@ -353,6 +373,7 @@ impl MenuItem {
         if let Some(submenu) = &self.submenu {
             let raw_submenu = submenu.to_raw(target);
             if !raw_submenu.is_null() {
+                // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
                 unsafe {
                     nautilus_menu_item_set_submenu(raw_menuitem, raw_submenu);
                     g_object_unref(raw_submenu as *mut GObject);
@@ -382,6 +403,8 @@ pub(crate) fn new_menu_item_raw(
             let tip_property = CString::new("tip").ok()?;
             let icon_property = CString::new("icon").ok()?;
 
+            // SAFETY: the GType was registered by this module, and the property names and
+            // values are matched pairs terminated by null.
             unsafe {
                 g_object_new(
                     item_type.raw(),
@@ -397,6 +420,8 @@ pub(crate) fn new_menu_item_raw(
                 ) as *mut NautilusMenuItem
             }
         }
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the
+        // arguments outlive the call.
         None => unsafe {
             nautilus_menu_item_new(
                 name.as_ptr(),

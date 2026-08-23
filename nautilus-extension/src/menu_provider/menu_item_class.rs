@@ -12,6 +12,8 @@ macro_rules! menu_item_class {
             }
 
             let item_class = class as *mut NautilusMenuItemClass;
+            // SAFETY: GObject calls this with a pointer to the vtable being initialised,
+            // valid for the duration of the call.
             unsafe {
                 (*item_class).activate = Some($activate_fn);
             }
@@ -29,6 +31,8 @@ macro_rules! menu_item_class {
 
             if let Some(activate) = rust_activate {
                 let _ = catch_unwind(AssertUnwindSafe(|| {
+                    // SAFETY: Nautilus owns this pointer for the duration of the call, and
+                    // `from_raw_borrowed` rejects null and takes its own reference.
                     if let Some(item) = unsafe { MenuItemObject::from_raw_borrowed(item) } {
                         activate.activate(&item);
                     }

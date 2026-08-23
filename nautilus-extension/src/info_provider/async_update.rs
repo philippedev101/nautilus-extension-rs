@@ -169,17 +169,23 @@ impl OperationState {
         closure: *mut GClosure,
     ) -> OperationState {
         if !provider.is_null() {
+            // SAFETY: the wrapper holds a live reference to this object, so taking one more
+            // is sound.
             unsafe {
                 g_object_ref(provider as *mut GObject);
             }
         }
 
         if !file_info.is_null() {
+            // SAFETY: the wrapper holds a live reference to this object, so taking one more
+            // is sound.
             unsafe {
                 g_object_ref(file_info as *mut GObject);
             }
         }
 
+        // SAFETY: the context pointer is null-checked here, so reference counting it is
+        // sound.
         let main_context = unsafe {
             let context = g_main_context_ref_thread_default();
             if context.is_null() {
@@ -237,6 +243,8 @@ pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolea
         return GFALSE;
     }
 
+    // SAFETY: the payload pointer is the one this module boxed when the callback was
+    // registered.
     let source = unsafe { &mut *(data as *mut CompletionSource) };
 
     if source.state.cleaned.load(Ordering::SeqCst) {
@@ -260,6 +268,8 @@ pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolea
     if let Some(update_file_info) = source.update_file_info.take() {
         let update_result = catch_unwind(AssertUnwindSafe(|| {
             if let Some(mut file_info) =
+                // SAFETY: Nautilus owns this pointer for the duration of the call, and
+                // `from_raw_borrowed` rejects null and takes its own reference.
                 unsafe { FileInfo::from_raw_borrowed(source.state.file_info()) }
             {
                 update_file_info(&mut file_info);
@@ -273,6 +283,8 @@ pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolea
         }
     }
 
+    // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the arguments
+    // outlive the call.
     unsafe {
         nautilus_info_provider_update_complete_invoke(
             source.state.closure(),
@@ -289,6 +301,8 @@ pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolea
 pub(crate) unsafe extern "C" fn destroy_completion_source(data: gpointer) {
     if !data.is_null() {
         let _ = catch_unwind(AssertUnwindSafe(|| {
+            // SAFETY: the pointer is the one this module boxed for the callback and is
+            // dropped exactly once.
             drop(unsafe { Box::from_raw(data as *mut CompletionSource) });
         }));
     }
@@ -305,6 +319,8 @@ pub(crate) fn ref_main_context_for_source(state: &OperationState) -> Option<*mut
     if context.is_null() {
         None
     } else {
+        // SAFETY: the context pointer is null-checked here, so reference counting it is
+        // sound.
         Some(unsafe { g_main_context_ref(context) })
     }
 }
@@ -315,8 +331,12 @@ pub(crate) fn schedule_completion_source(source_data: CompletionSource) -> bool 
         None => return false,
     };
 
+    // SAFETY: the source was created here and is configured before anything else can
+    // observe it.
     let source = unsafe { g_idle_source_new() };
     if source.is_null() {
+        // SAFETY: the context pointer is null-checked here, so reference counting it is
+        // sound.
         unsafe {
             g_main_context_unref(context);
         }
@@ -325,6 +345,8 @@ pub(crate) fn schedule_completion_source(source_data: CompletionSource) -> bool 
 
     let source_data = Box::into_raw(Box::new(source_data));
 
+    // SAFETY: the source was created here and is configured before anything else can
+    // observe it.
     unsafe {
         g_source_set_priority(source, G_PRIORITY_DEFAULT);
         g_source_set_callback(
@@ -387,6 +409,8 @@ pub(crate) fn finish_in_flight(raw: *mut NautilusOperationHandle) -> bool {
 
 pub(crate) fn drop_raw_operation_handle(raw: *mut NautilusOperationHandle) {
     if !raw.is_null() {
+        // SAFETY: the pointer is the one this module leaked from an `Arc` and is reclaimed
+        // exactly once.
         unsafe {
             drop(Arc::from_raw(raw as *const OperationState));
         }
@@ -403,6 +427,7 @@ pub(crate) fn cleanup_state(state: &OperationState) {
         return;
     }
 
+    // SAFETY: the wrapper owns the closure reference being released.
     unsafe {
         g_closure_unref(state.closure());
         if !state.file_info().is_null() {
@@ -430,7 +455,10 @@ pub(crate) fn new_operation(
         return None;
     }
 
+    // SAFETY: Nautilus owns this pointer for the duration of the call, and
+    // `from_raw_borrowed` rejects null and takes its own reference.
     let file_info = unsafe { FileInfo::from_raw_borrowed(file)? };
+    // SAFETY: the wrapper holds a live reference to this closure.
     let closure = unsafe { g_closure_ref(update_complete) };
     let state = Arc::new(OperationState::new(provider, file, closure));
     let raw_handle = Arc::into_raw(state.clone()) as *mut NautilusOperationHandle;
@@ -479,6 +507,8 @@ pub(crate) fn dup_optional_string(value: Option<String>) -> *mut c_char {
         None => return ptr::null_mut(),
     };
 
+    // SAFETY: `value` is a NUL-terminated `CString` that outlives the call, and
+    // `g_strdup` copies it.
     unsafe { g_strdup(value.as_ptr()) }
 }
 
@@ -488,6 +518,8 @@ pub(crate) unsafe fn c_string_arg(raw: *const c_char) -> Option<String> {
     }
 
     Some(
+        // SAFETY: `raw` is non-null, checked just above, and NUL-terminated by its
+        // producer.
         unsafe { CStr::from_ptr(raw) }
             .to_string_lossy()
             .into_owned(),
@@ -515,6 +547,7 @@ pub(crate) fn with_file_info_impl<R, F>(
 where
     F: FnOnce(Arc<dyn FileInfoImpl>, FileInfoHandle) -> R,
 {
+    // SAFETY: the raw value came from Nautilus for this call.
     let handle = unsafe { FileInfoHandle::from_raw(raw_file_info) };
     let rust_file_info = rust_file_info
         .lock()

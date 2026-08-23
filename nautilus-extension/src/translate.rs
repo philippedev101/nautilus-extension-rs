@@ -11,6 +11,8 @@ pub fn file_info_vec_from_g_list(list: *mut GList) -> Vec<FileInfo> {
         return vec;
     }
 
+    // SAFETY: `list` is either null or a GList owned by the caller, which these calls
+    // tolerate.
     unsafe {
         let length = g_list_length(list);
         for i in 0..length {
@@ -29,9 +31,11 @@ pub unsafe fn take_glib_string(raw: *mut c_char) -> Option<String> {
         return None;
     }
 
+    // SAFETY: `raw` is non-null, checked just above, and NUL-terminated by its producer.
     let value = unsafe { CStr::from_ptr(raw) }
         .to_string_lossy()
         .into_owned();
+    // SAFETY: `raw` is a GLib allocation this function owns.
     unsafe {
         g_free(raw as gpointer);
     }
@@ -44,6 +48,8 @@ pub unsafe fn borrowed_string(raw: *const c_char) -> Option<String> {
     }
 
     Some(
+        // SAFETY: `raw` is non-null, checked just above, and NUL-terminated by its
+        // producer.
         unsafe { CStr::from_ptr(raw) }
             .to_string_lossy()
             .into_owned(),
@@ -60,8 +66,12 @@ where
         return vec;
     }
 
+    // SAFETY: `list` is either null or a GList owned by the caller, which these calls
+    // tolerate.
     let length = unsafe { g_list_length(list) };
     for i in 0..length {
+        // SAFETY: `list` is either null or a GList owned by the caller, which these calls
+        // tolerate.
         if let Some(value) = convert(unsafe { g_list_nth_data(list, i) }) {
             vec.push(value);
         }

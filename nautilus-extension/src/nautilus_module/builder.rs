@@ -235,6 +235,8 @@ impl NautilusModule {
             });
         }
 
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         let parent_type = unsafe { nautilus_menu_item_get_type() };
         let parent_size = g_type_size(parent_type);
         let info = GTypeInfo {
@@ -250,6 +252,8 @@ impl NautilusModule {
             value_table: &EMPTY_VALUE_TABLE,
         };
 
+        // SAFETY: the module pointer comes from Nautilus and the type info outlives the
+        // registration call.
         let item_type = unsafe {
             g_type_module_register_type(self.module, parent_type, c_type_name.as_ptr(), &info, 0)
         };
@@ -262,6 +266,7 @@ impl NautilusModule {
         self.reservations
             .push(ProviderReservation::MenuItemActivate(index));
 
+        // SAFETY: the raw value came from Nautilus for this call.
         Ok(unsafe { MenuItemType::from_raw(item_type) }.expect("registered GType is nonzero"))
     }
 
@@ -400,6 +405,8 @@ impl NautilusModule {
             value_table: &EMPTY_VALUE_TABLE,
         };
 
+        // SAFETY: `self.module` is the `GTypeModule` Nautilus passed to the registration
+        // entry point, and `info` and `name` outlive every call made through them here.
         unsafe {
             let module_type =
                 g_type_module_register_type(self.module, G_TYPE_OBJECT, name.as_ptr(), &info, 0);
@@ -488,6 +495,8 @@ fn g_type_size(type_: GType) -> GTypeSize {
         class_size: 0,
         instance_size: 0,
     };
+    // SAFETY: `query` is a stack slot this function owns and `g_type_query` tolerates an
+    // unregistered type.
     unsafe {
         g_type_query(type_, &mut query);
     }

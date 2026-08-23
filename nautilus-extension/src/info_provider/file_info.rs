@@ -9,6 +9,8 @@ pub struct FileInfo {
 impl FileInfo {
     /// Returns the registered `NautilusFileInfo` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_file_info_get_type() }
     }
 
@@ -22,6 +24,8 @@ impl FileInfo {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw_file_info as *mut GObject);
         }
@@ -43,23 +47,31 @@ impl FileInfo {
 
     /// Creates a `FileInfo` for a Gio file location.
     pub fn create(location: &OwnedGObject<GFile>) -> Option<FileInfo> {
+        // SAFETY: the argument outlives the call and the result is a transfer-full
+        // reference the wrapper takes ownership of.
         unsafe { FileInfo::from_raw_full(nautilus_file_info_create(location.as_ptr())) }
     }
 
     /// Creates a `FileInfo` for a URI.
     pub fn create_for_uri(uri: &str) -> Option<FileInfo> {
         let uri = CString::new(uri).ok()?;
+        // SAFETY: the argument outlives the call and the result is a transfer-full
+        // reference the wrapper takes ownership of.
         unsafe { FileInfo::from_raw_full(nautilus_file_info_create_for_uri(uri.as_ptr())) }
     }
 
     /// Looks up an existing `FileInfo` for a Gio file location.
     pub fn lookup(location: &OwnedGObject<GFile>) -> Option<FileInfo> {
+        // SAFETY: the argument outlives the call and the result is a transfer-full
+        // reference the wrapper takes ownership of.
         unsafe { FileInfo::from_raw_full(nautilus_file_info_lookup(location.as_ptr())) }
     }
 
     /// Looks up an existing `FileInfo` for a URI.
     pub fn lookup_for_uri(uri: &str) -> Option<FileInfo> {
         let uri = CString::new(uri).ok()?;
+        // SAFETY: the argument outlives the call and the result is a transfer-full
+        // reference the wrapper takes ownership of.
         unsafe { FileInfo::from_raw_full(nautilus_file_info_lookup_for_uri(uri.as_ptr())) }
     }
 
@@ -141,6 +153,8 @@ impl FileInfo {
             Err(_) => return,
         };
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the
+        // arguments outlive the call.
         unsafe {
             nautilus_file_info_add_string_attribute(
                 self.raw_file_info,
@@ -180,12 +194,16 @@ impl FileInfo {
     /// Returns the URI for the Gio location object.
     pub fn location_uri(&self) -> Option<String> {
         let location = self.location()?;
+        // SAFETY: the pointer is either null or a transfer-full GLib string, which
+        // `take_glib_string` frees.
         unsafe { take_glib_string(g_file_get_uri(location.as_ptr())) }
     }
 
     /// Returns the local filesystem path for the Gio location object.
     pub fn location_path(&self) -> Option<PathBuf> {
         let location = self.location()?;
+        // SAFETY: the pointer is either null or a transfer-full GLib string, which
+        // `take_glib_string` frees.
         unsafe { take_glib_string(g_file_get_path(location.as_ptr())).map(PathBuf::from) }
     }
 
@@ -265,6 +283,8 @@ impl FileInfoList {
     /// `raw` must be either null or a valid borrowed `GList` containing
     /// `NautilusFileInfo` pointers.
     pub unsafe fn copy_from_raw(raw: *mut GList) -> Option<FileInfoList> {
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { FileInfoList::from_raw_full(nautilus_file_info_list_copy(raw)) }
     }
 
@@ -273,13 +293,18 @@ impl FileInfoList {
         let mut raw_files: *mut GList = ptr::null_mut();
 
         for file in files {
+            // SAFETY: the list is the one this function is building and the appended
+            // pointer outlives the call.
             unsafe {
                 raw_files = g_list_append(raw_files, file.raw() as gpointer);
             }
         }
 
+        // SAFETY: the list holds `NautilusFileInfo` elements, which is what these Nautilus
+        // helpers expect.
         let copied = unsafe { nautilus_file_info_list_copy(raw_files) };
 
+        // SAFETY: the list was built here and holds only borrowed element pointers.
         unsafe {
             g_list_free(raw_files);
             FileInfoList::from_raw_full(copied)
@@ -312,6 +337,8 @@ impl FileInfoList {
 impl Drop for FileInfoList {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the list holds `NautilusFileInfo` elements, which is what these
+            // Nautilus helpers expect.
             unsafe {
                 nautilus_file_info_list_free(self.raw);
             }
@@ -331,6 +358,8 @@ unsafe impl NautilusObject for FileInfo {
 
 impl Clone for FileInfo {
     fn clone(&self) -> FileInfo {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw_file_info as *mut GObject);
         }
@@ -346,6 +375,8 @@ impl Drop for FileInfo {
             return;
         }
 
+        // SAFETY: the wrapper owns the reference being released and does not use the
+        // pointer again.
         unsafe {
             g_object_unref(self.raw_file_info as *mut GObject);
         }
@@ -365,6 +396,8 @@ pub struct FileInfoHandle {
 impl FileInfoHandle {
     /// Returns the registered `NautilusFileInfo` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_file_info_get_type() }
     }
 
@@ -393,6 +426,8 @@ impl FileInfoHandle {
 
     /// Converts this borrowed handle into an owned [`FileInfo`] reference.
     pub fn to_owned(&self) -> Option<FileInfo> {
+        // SAFETY: Nautilus owns this pointer for the duration of the call, and
+        // `from_raw_borrowed` rejects null and takes its own reference.
         unsafe { FileInfo::from_raw_borrowed(self.raw_file_info) }
     }
 }
@@ -522,6 +557,8 @@ impl<T> OwnedGObject<T> {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }
@@ -562,6 +599,8 @@ impl<T> OwnedGObject<T> {
 
 impl<T> Clone for OwnedGObject<T> {
     fn clone(&self) -> OwnedGObject<T> {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut GObject);
         }
@@ -579,6 +618,8 @@ impl<T> Drop for OwnedGObject<T> {
             return;
         }
 
+        // SAFETY: the wrapper owns the reference being released and does not use the
+        // pointer again.
         unsafe {
             g_object_unref(self.raw as *mut GObject);
         }

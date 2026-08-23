@@ -128,6 +128,8 @@ pub struct MenuProviderHandle {
 impl MenuProviderHandle {
     /// Returns the registered `NautilusMenuProvider` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_menu_provider_get_type() }
     }
 
@@ -154,6 +156,8 @@ impl MenuProviderHandle {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }
@@ -179,6 +183,7 @@ impl MenuProviderHandle {
 
     /// Emits Nautilus' `items-updated` signal for this provider.
     pub fn emit_items_updated_signal(&self) {
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_menu_provider_emit_items_updated_signal(self.raw);
         }
@@ -194,6 +199,8 @@ impl MenuProviderHandle {
             callback: Box::new(callback),
         }));
 
+        // SAFETY: the instance is the live object this wrapper owns, and the payload is
+        // paired with the destroy notify that frees it.
         let signal_id = unsafe {
             g_signal_connect_data(
                 self.raw as *mut GObject,
@@ -211,6 +218,8 @@ impl MenuProviderHandle {
         match SignalHandlerId::from_raw(signal_id) {
             Some(signal_id) => Some(signal_id),
             None => {
+                // SAFETY: the pointer is the one this module boxed for the callback and is
+                // dropped exactly once.
                 unsafe {
                     drop(Box::from_raw(signal_data));
                 }
@@ -221,6 +230,7 @@ impl MenuProviderHandle {
 
     /// Disconnects a signal handler previously connected on this provider.
     pub fn disconnect_signal(&self, signal_id: SignalHandlerId) {
+        // SAFETY: the handler id came from a connect call on this same object.
         unsafe {
             g_signal_handler_disconnect(self.raw as *mut GObject, signal_id.raw());
         }
@@ -231,17 +241,23 @@ impl MenuProviderHandle {
         let mut raw_files: *mut GList = ptr::null_mut();
 
         for file in files {
+            // SAFETY: the list is the one this function is building and the appended
+            // pointer outlives the call.
             unsafe {
                 raw_files = g_list_append(raw_files, file.raw() as *mut c_void);
             }
         }
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         let items = unsafe { nautilus_menu_provider_get_file_items(self.raw, raw_files) };
 
+        // SAFETY: the list was built here and holds only borrowed element pointers.
         unsafe {
             g_list_free(raw_files);
         }
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { MenuItemList::from_raw_full(items) }
             .map(|items| items.items())
             .unwrap_or_default()
@@ -250,8 +266,11 @@ impl MenuProviderHandle {
     /// Calls the provider interface for background menu items.
     pub fn get_background_items(&self, current_folder: &FileInfo) -> Vec<MenuItemObject> {
         let items =
+            // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
             unsafe { nautilus_menu_provider_get_background_items(self.raw, current_folder.raw()) };
 
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { MenuItemList::from_raw_full(items) }
             .map(|items| items.items())
             .unwrap_or_default()
@@ -275,6 +294,8 @@ impl MenuProviderHandle {
 
 impl Clone for MenuProviderHandle {
     fn clone(&self) -> MenuProviderHandle {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut GObject);
         }
@@ -286,6 +307,8 @@ impl Clone for MenuProviderHandle {
 impl Drop for MenuProviderHandle {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut GObject);
             }
@@ -319,6 +342,8 @@ impl Menu {
 
     /// Builds the corresponding native `NautilusMenu` object.
     pub fn to_object(&self, target: &MenuActivationTarget) -> Option<MenuObject> {
+        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
+        // of.
         unsafe { MenuObject::from_raw_full(self.to_raw(target)) }
     }
 
@@ -327,6 +352,8 @@ impl Menu {
 
         for menu_item in &self.menu_items {
             if let Some(raw_menuitem) = menu_item.to_raw(target) {
+                // SAFETY: the list is the one this function is building and the appended
+                // pointer outlives the call.
                 unsafe {
                     raw_file_items = g_list_append(raw_file_items, raw_menuitem as *mut c_void);
                 }
@@ -337,6 +364,7 @@ impl Menu {
     }
 
     pub(crate) fn to_raw(&self, target: &MenuActivationTarget) -> *mut NautilusMenu {
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         let raw_menu = unsafe { nautilus_menu_new() };
 
         if raw_menu.is_null() {
@@ -345,6 +373,7 @@ impl Menu {
 
         for menu_item in &self.menu_items {
             if let Some(raw_menuitem) = menu_item.to_raw(target) {
+                // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
                 unsafe {
                     nautilus_menu_append_item(raw_menu, raw_menuitem);
                     g_object_unref(raw_menuitem as *mut GObject);

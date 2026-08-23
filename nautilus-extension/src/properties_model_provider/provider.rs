@@ -43,6 +43,8 @@ pub struct PropertiesModelProviderHandle {
 impl PropertiesModelProviderHandle {
     /// Returns the registered `NautilusPropertiesModelProvider` GType.
     pub fn type_() -> GType {
+        // SAFETY: the Nautilus GType registration functions take no arguments and are safe
+        // to call at any point.
         unsafe { nautilus_properties_model_provider_get_type() }
     }
 
@@ -73,6 +75,8 @@ impl PropertiesModelProviderHandle {
             return None;
         }
 
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(raw as *mut RawGObject);
         }
@@ -100,23 +104,30 @@ impl PropertiesModelProviderHandle {
     pub fn get_models(&self, files: &[FileInfo]) -> Vec<PropertiesModelObject> {
         let mut raw_files: *mut GList = ptr::null_mut();
         for file in files {
+            // SAFETY: the list is the one this function is building and the appended
+            // pointer outlives the call.
             unsafe {
                 raw_files = g_list_append(raw_files, file.raw() as *mut c_void);
             }
         }
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         let models = unsafe { nautilus_properties_model_provider_get_models(self.raw, raw_files) };
 
+        // SAFETY: the list was built here and holds only borrowed element pointers.
         unsafe {
             g_list_free(raw_files);
         }
 
+        // SAFETY: `models` is the GList the provider interface just returned, whose
+        // elements are `NautilusPropertiesModel` objects that stay alive until freed.
         let vec = unsafe {
             vec_from_g_list(models, |data| {
                 PropertiesModelObject::from_raw_borrowed(data as *mut NautilusPropertiesModel)
             })
         };
 
+        // SAFETY: the list came from the call just made and its elements are owned here.
         unsafe {
             free_owned_g_object_list(models);
         }
@@ -135,6 +146,8 @@ impl PropertiesModelProviderHandle {
 
 impl Clone for PropertiesModelProviderHandle {
     fn clone(&self) -> PropertiesModelProviderHandle {
+        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
+        // sound.
         unsafe {
             g_object_ref(self.raw as *mut RawGObject);
         }
@@ -146,6 +159,8 @@ impl Clone for PropertiesModelProviderHandle {
 impl Drop for PropertiesModelProviderHandle {
     fn drop(&mut self) {
         if !self.raw.is_null() {
+            // SAFETY: the wrapper owns the reference being released and does not use the
+            // pointer again.
             unsafe {
                 g_object_unref(self.raw as *mut RawGObject);
             }

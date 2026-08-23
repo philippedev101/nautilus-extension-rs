@@ -1,3 +1,4 @@
+#![warn(clippy::undocumented_unsafe_blocks)]
 #![deny(bare_trait_objects)]
 #![warn(missing_docs)]
 #![warn(rustdoc::broken_intra_doc_links)]
@@ -296,6 +297,8 @@ macro_rules! nautilus_module {
 
 #[cfg(test)]
 pub(crate) mod test_support {
+    // See the note in the provider test modules.
+    #![allow(clippy::undocumented_unsafe_blocks)]
     use crate::glib_ffi::GType;
     use crate::gobject_ffi::GTypeModule;
     use std::ptr;
@@ -354,6 +357,7 @@ pub(crate) mod test_support {
             .lock()
             .expect("provider-state test lock poisoned");
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_module_initialize(ptr::null_mut());
         }
@@ -361,6 +365,7 @@ pub(crate) mod test_support {
         let mut types: *const GType = ptr::null();
         let mut num_types = -1;
 
+        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_module_list_types(&mut types, &mut num_types);
             nautilus_module_shutdown();

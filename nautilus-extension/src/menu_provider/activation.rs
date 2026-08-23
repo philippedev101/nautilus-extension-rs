@@ -50,8 +50,12 @@ pub(crate) unsafe extern "C" fn menu_provider_items_updated_trampoline(
         return;
     }
 
+    // SAFETY: the payload pointer is the one this module boxed when the callback was
+    // registered.
     let signal_data = unsafe { &*(user_data as *const MenuProviderItemsUpdatedData) };
     let _ = catch_unwind(AssertUnwindSafe(|| {
+        // SAFETY: Nautilus owns this pointer for the duration of the call, and
+        // `from_raw_borrowed` rejects null and takes its own reference.
         if let Some(provider) = unsafe { MenuProviderHandle::from_raw_borrowed(provider) } {
             (signal_data.callback)(&provider);
         }
@@ -64,6 +68,8 @@ pub(crate) unsafe extern "C" fn destroy_menu_provider_items_updated_data(
 ) {
     if !user_data.is_null() {
         let _ = catch_unwind(AssertUnwindSafe(|| {
+            // SAFETY: the pointer is the one this module boxed for the callback and is
+            // dropped exactly once.
             drop(unsafe { Box::from_raw(user_data as *mut MenuProviderItemsUpdatedData) });
         }));
     }
@@ -81,8 +87,12 @@ pub(crate) unsafe extern "C" fn menu_item_object_activate_trampoline(
         return;
     }
 
+    // SAFETY: the payload pointer is the one this module boxed when the callback was
+    // registered.
     let signal_data = unsafe { &*(user_data as *const MenuItemObjectActivateData) };
     let _ = catch_unwind(AssertUnwindSafe(|| {
+        // SAFETY: Nautilus owns this pointer for the duration of the call, and
+        // `from_raw_borrowed` rejects null and takes its own reference.
         if let Some(item) = unsafe { MenuItemObject::from_raw_borrowed(item) } {
             (signal_data.callback)(&item);
         }
@@ -95,6 +105,8 @@ pub(crate) unsafe extern "C" fn destroy_menu_item_object_activate_data(
 ) {
     if !user_data.is_null() {
         let _ = catch_unwind(AssertUnwindSafe(|| {
+            // SAFETY: the pointer is the one this module boxed for the callback and is
+            // dropped exactly once.
             drop(unsafe { Box::from_raw(user_data as *mut MenuItemObjectActivateData) });
         }));
     }
@@ -113,6 +125,8 @@ pub(crate) unsafe extern "C" fn menu_item_activate_trampoline(
         return;
     }
 
+    // SAFETY: the payload pointer is the one this module boxed when the callback was
+    // registered.
     let activate_data = unsafe { &*(user_data as *const ActivateData) };
     let activation = MenuActivation {
         target: activate_data.target.clone(),
@@ -129,6 +143,8 @@ pub(crate) unsafe extern "C" fn destroy_activate_data(
 ) {
     if !user_data.is_null() {
         let _ = catch_unwind(AssertUnwindSafe(|| {
+            // SAFETY: the pointer is the one this module boxed for the callback and is
+            // dropped exactly once.
             drop(unsafe { Box::from_raw(user_data as *mut ActivateData) });
         }));
     }
@@ -150,6 +166,8 @@ pub(crate) fn connect_activate_signal(
     });
 
     let activate_data = Box::into_raw(activate_data);
+    // SAFETY: the instance is the live object this wrapper owns, and the payload is paired
+    // with the destroy notify that frees it.
     let signal_id = unsafe {
         g_signal_connect_data(
             raw_menuitem as *mut GObject,
@@ -165,6 +183,8 @@ pub(crate) fn connect_activate_signal(
     };
 
     if signal_id == 0 {
+        // SAFETY: the connect failed, so nothing took the payload and this scope still
+        // owns the box it leaked a moment ago.
         unsafe {
             let _ = catch_unwind(AssertUnwindSafe(|| {
                 drop(Box::from_raw(activate_data));
