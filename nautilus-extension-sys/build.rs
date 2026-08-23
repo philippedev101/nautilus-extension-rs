@@ -2,6 +2,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=NAUTILUS_EXTENSION_RS_SKIP_NAUTILUS4_PKG_CONFIG");
     println!("cargo:rerun-if-env-changed=DOCS_RS");
     println!("cargo:rustc-check-cfg=cfg(nautilus_extension_rs_skip_link)");
+    println!("cargo:rustc-check-cfg=cfg(docsrs)");
 
     if std::env::var_os("DOCS_RS").is_some() {
         println!(

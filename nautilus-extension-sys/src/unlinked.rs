@@ -13,6 +13,11 @@
 //! compile and lets callers stay single-path. Callers that need to behave
 //! differently should branch on [`crate::NATIVE_API_AVAILABLE`] at run time
 //! rather than duplicating themselves behind a cfg.
+//!
+//! Documentation builds are the exception. Under `cfg(docsrs)` the declarations
+//! are emitted without the `link` attribute, because rustdoc never links: that
+//! way docs.rs renders the API a normal installed build has rather than a page
+//! of stubs.
 
 /// Declares the Nautilus C API once and expands it for both build modes.
 ///
@@ -26,8 +31,8 @@ macro_rules! nautilus_api {
             fn $name:ident($($arg:ident: $arg_ty:ty),* $(,)?) $(-> $ret:ty)?;
         )*
     ) => {
-        #[cfg(not(nautilus_extension_rs_skip_link))]
-        #[link(name = "nautilus-extension")]
+        #[cfg(any(docsrs, not(nautilus_extension_rs_skip_link)))]
+        #[cfg_attr(not(nautilus_extension_rs_skip_link), link(name = "nautilus-extension"))]
         extern "C" {
             $(
                 $(#[$attr])*
@@ -44,7 +49,7 @@ macro_rules! nautilus_api {
             /// that ignores its arguments and returns a neutral value. It keeps
             /// the signature of the linked function, whose safety requirements
             /// apply whenever the native library is present.
-            #[cfg(nautilus_extension_rs_skip_link)]
+            #[cfg(all(nautilus_extension_rs_skip_link, not(docsrs)))]
             #[allow(unused_variables)]
             pub unsafe extern "C" fn $name($($arg: $arg_ty),*) $(-> $ret)? {
                 $crate::unlinked::unlinked_default()
@@ -56,19 +61,19 @@ macro_rules! nautilus_api {
 pub(crate) use nautilus_api;
 
 /// The value a stub returns in place of calling the native library.
-#[cfg(nautilus_extension_rs_skip_link)]
+#[cfg(all(nautilus_extension_rs_skip_link, not(docsrs)))]
 pub trait UnlinkedDefault {
     /// Returns the neutral value for this type.
     fn unlinked_default() -> Self;
 }
 
 /// Returns the neutral value for an unlinked call's return type.
-#[cfg(nautilus_extension_rs_skip_link)]
+#[cfg(all(nautilus_extension_rs_skip_link, not(docsrs)))]
 pub fn unlinked_default<T: UnlinkedDefault>() -> T {
     T::unlinked_default()
 }
 
-#[cfg(nautilus_extension_rs_skip_link)]
+#[cfg(all(nautilus_extension_rs_skip_link, not(docsrs)))]
 mod impls {
     use super::UnlinkedDefault;
     use crate::NautilusOperationResult;

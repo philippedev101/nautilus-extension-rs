@@ -15,11 +15,10 @@ use crate::unlinked::nautilus_api;
 
 /// Whether this build links against the native Nautilus extension library.
 ///
-/// This is `false` only when the library was unavailable at build time, such
-/// as on docs.rs. Every function below is then a stub that returns a neutral
-/// value, so callers that must behave differently should branch on this
-/// constant at run time.
-pub const NATIVE_API_AVAILABLE: bool = cfg!(not(nautilus_extension_rs_skip_link));
+/// This is `false` when the library was unavailable at build time, in which
+/// case each Nautilus function is a stub that returns a neutral value. Callers
+/// that must behave differently should branch on this constant at run time.
+pub const NATIVE_API_AVAILABLE: bool = cfg!(any(docsrs, not(nautilus_extension_rs_skip_link)));
 
 extern crate gio_sys as gio_ffi;
 extern crate glib_sys as glib_ffi;

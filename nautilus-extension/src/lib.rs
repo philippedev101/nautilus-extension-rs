@@ -118,12 +118,6 @@ extern crate lazy_static;
 pub extern crate libc;
 pub extern crate nautilus_extension_sys as nautilus_ffi;
 
-/// Whether this build links against the native Nautilus extension library.
-///
-/// This is `false` only when the library was unavailable at build time, such
-/// as on docs.rs, in which case every Nautilus call is a stub that returns a
-/// neutral value and the provider registration entry points report
-/// [`NautilusModuleError::NativeApiUnavailable`].
 pub use crate::nautilus_ffi::NATIVE_API_AVAILABLE;
 
 pub use crate::column_provider::{
@@ -316,6 +310,7 @@ pub(crate) mod test_support {
     macro_rules! require_native_api {
         () => {
             if !$crate::NATIVE_API_AVAILABLE {
+                eprintln!("skipped: this build has no native Nautilus library");
                 return;
             }
         };
@@ -328,6 +323,7 @@ pub(crate) mod test_support {
     macro_rules! require_unlinked_build {
         () => {
             if $crate::NATIVE_API_AVAILABLE {
+                eprintln!("skipped: this build links against the native Nautilus library");
                 return;
             }
         };

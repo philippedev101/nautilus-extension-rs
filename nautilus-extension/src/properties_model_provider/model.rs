@@ -66,6 +66,10 @@ impl PropertiesModel {
 
     /// Builds the corresponding native `NautilusPropertiesModel` object.
     pub fn to_object(&self) -> Option<PropertiesModelObject> {
+        if !NATIVE_API_AVAILABLE {
+            return None;
+        }
+
         let title = CString::new(&self.title as &str).ok()?;
         let store = unsafe { g_list_store_new(nautilus_properties_item_get_type()) };
 

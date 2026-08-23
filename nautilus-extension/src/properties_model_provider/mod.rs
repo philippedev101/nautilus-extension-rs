@@ -6,6 +6,7 @@ use crate::glib_ffi::{g_list_append, g_list_free, gpointer, GList, GType};
 use crate::gobject_ffi::{g_object_ref, g_object_unref, GObject, GObject as RawGObject};
 use crate::gobject_utils::free_owned_g_object_list;
 use crate::info_provider::{FileInfo, OwnedGObject};
+use crate::nautilus_ffi::NATIVE_API_AVAILABLE;
 use crate::nautilus_ffi::{
     nautilus_properties_item_get_name, nautilus_properties_item_get_type,
     nautilus_properties_item_get_value, nautilus_properties_item_new,
