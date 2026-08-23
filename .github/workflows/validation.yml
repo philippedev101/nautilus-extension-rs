@@ -62,7 +62,9 @@ jobs:
     container: fedora:latest
     steps:
       - name: Install base dependencies
-        run: dnf install -y gcc git pkgconf-pkg-config rustup nautilus-devel gobject-introspection
+        # Fedora splits perl into micro-packages; the validation scripts need
+        # File::Find, which the base interpreter does not pull in.
+        run: dnf install -y gcc git pkgconf-pkg-config rustup nautilus-devel gobject-introspection perl-File-Find
       - uses: actions/checkout@v4
       - name: Trust the checked-out repository
         # actions/checkout registers the workspace as a git safe directory in a
