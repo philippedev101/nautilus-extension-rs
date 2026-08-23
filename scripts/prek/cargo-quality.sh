@@ -89,6 +89,13 @@ case "${1:-}" in
     clippy)
         run_with_rust_warnings_denied clippy --all-targets -- -D warnings
         ;;
+    clippy-fuzz)
+        # The fuzz crate is its own workspace, so the main clippy run does not see it.
+        # Linting it keeps the safety-comment rule enforced across the whole repository.
+        cd fuzz
+        CARGO_TARGET_DIR="${CARGO_TARGET_DIR}-fuzz" \
+            run_with_rust_warnings_denied clippy --all-targets -- -D warnings
+        ;;
     test)
         run_tests_with_glib_criticals_fatal test --all-targets
         ;;
