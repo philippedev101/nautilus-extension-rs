@@ -25,6 +25,17 @@ constant at run time, and in tests use the `require_native_api!` and
 `require_unlinked_build!` guards.
 `check-architecture.sh` fails if that cfg appears outside `nautilus-extension-sys`.
 
+Raw pointer use is contained by two crate-private traits in `gobject_utils.rs`.
+`GObjectProperties` covers wrappers whose accessors are GObject properties and
+`NautilusObject` covers those whose accessors are Nautilus C getters, which the
+caller passes in. Implementing either states the wrapper's invariant once, so
+the accessors above them are safe functions; both reject a null pointer rather
+than calling through it. New object wrappers should implement the matching
+trait instead of opening an `unsafe` block per accessor. What stays `unsafe` is
+the rest: the `extern "C"` trampolines Nautilus calls, the `from_raw_*` and
+`into_raw` boundary functions, and the points where ownership of a transfer-full
+pointer changes hands.
+
 Rust source files should stay at or below 1000 lines. A directory that contains
 Rust source should contain more than one Rust source file; split tests or
 implementation details into sibling files instead of leaving singleton source

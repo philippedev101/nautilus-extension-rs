@@ -22,6 +22,9 @@
 * Made GLib criticals fail the unit test run, so a wrapper that hands GLib a
   value it should have rejected is caught even when the safe API still returns
   the right answer.
+* Moved GObject property and Nautilus getter access behind two internal safe
+  accessor traits. Accessors on a wrapper built from a null pointer now return
+  a neutral value instead of reaching GLib.
 
 ## 0.8.0 (2022-07-27)
 
