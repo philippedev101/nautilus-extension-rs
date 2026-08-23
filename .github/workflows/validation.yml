@@ -10,7 +10,7 @@ jobs:
     name: Fast validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -25,7 +25,7 @@ jobs:
     name: Native Nautilus validation / Ubuntu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -40,7 +40,7 @@ jobs:
     name: Package validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: List package contents
         run: bash scripts/validation/package.sh --skip-publish-dry-run
@@ -49,7 +49,7 @@ jobs:
     name: Semver policy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: Install cargo-semver-checks
         run: cargo install cargo-semver-checks --locked
@@ -65,7 +65,7 @@ jobs:
         # Fedora splits perl into micro-packages; the validation scripts need
         # File::Find, which the base interpreter does not pull in.
         run: dnf install -y gcc git pkgconf-pkg-config rustup nautilus-devel gobject-introspection perl-File-Find
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Trust the checked-out repository
         # actions/checkout registers the workspace as a git safe directory in a
         # global config it tears down again, and container jobs run the later
@@ -88,7 +88,7 @@ jobs:
         run: |
           pacman -Syu --noconfirm
           pacman -S --noconfirm base-devel git pkgconf rustup nautilus gobject-introspection
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Trust the checked-out repository
         # actions/checkout registers the workspace as a git safe directory in a
         # global config it tears down again, and container jobs run the later
@@ -106,7 +106,7 @@ jobs:
     name: Minimum supported Rust version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Keep this pinned to the `rust-version` both crates declare;
       # check-docs.sh fails if they drift apart.
       - uses: dtolnay/rust-toolchain@1.92
