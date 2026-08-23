@@ -4,7 +4,8 @@ This audit applies to the Nautilus API 4 Rust wrapper and sys crates.
 
 Nautilus loads extension shared objects in-process. Rust panics must not unwind
 through Nautilus or GLib C frames. Raw pointer use must stay local to wrapper
-constructors, GObject property helpers, and generated trampolines.
+constructors, the `GObjectProperties` and `NautilusObject` accessor traits, the
+`from_raw_*` and `into_raw` boundary functions, and generated trampolines.
 
 ## Builds Without the Native Library
 
@@ -17,11 +18,6 @@ values flow through the ordinary null checks in the wrappers, so the safe API
 reports `None`, `false`, and `OperationResult::Failed` without a second code
 path. Nothing in the wrapper crates is compiled conditionally on that build
 mode; the public `NATIVE_API_AVAILABLE` constant is the run-time signal.
-
-The unit test run sets `G_DEBUG=fatal-warnings,fatal-criticals`. A wrapper that
-hands GLib a stub value often still returns the right answer, so the GLib
-critical is the only signal that something reached GLib which should have been
-rejected first; making it fatal turns that into a test failure.
 
 ## C ABI Entry Points
 
@@ -105,6 +101,11 @@ functions. Some callback and GObject integration code necessarily remains
 unsafe, but new unsafe operations should be accompanied by a precise local
 reason.
 
+Accessors are not the place for that. A new object wrapper implements
+`GObjectProperties` or `NautilusObject` and gets a safe accessor surface from
+it, so the wrapper states its pointer invariant once rather than once per
+method.
+
 ## Validation
 
 Run these checks before release:
@@ -120,6 +121,12 @@ bash scripts/validation/fuzz-smoke.sh
 The sanitizer suppression file is limited to known Nautilus allocation
 behavior observed while loading example modules. New leaks in Rust-owned
 objects should be fixed rather than suppressed.
+
+The unit test run sets `G_DEBUG=fatal-warnings,fatal-criticals`. A wrapper that
+hands GLib something it should have rejected first, such as a stub GType in an
+unlinked build or a null object, often still returns the right answer, so the
+GLib critical is the only signal. Making it fatal turns that into a test
+failure, and the accessor null-guard tests depend on it.
 
 The Valgrind smoke script fails on invalid reads, invalid writes, use of
 uninitialized values, and other memory errors. It intentionally does not fail on
