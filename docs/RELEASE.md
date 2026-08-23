@@ -20,9 +20,13 @@ bash scripts/validation/all-fast.sh
 
 This includes formatting, architecture shape checks, documentation metadata,
 API surface coverage, clippy for the workspace and the fuzz crate, tests,
-doctests, docs, docs.rs simulation,
-example symbol checks, and whitespace validation. The tests run with
-`G_DEBUG=fatal-warnings,fatal-criticals`, so a GLib critical fails the suite.
+doctests, docs, docs.rs simulation, example symbol checks, and whitespace
+validation. The tests run with `G_DEBUG=fatal-warnings,fatal-criticals`, so a
+GLib critical fails the suite.
+
+Steps 4 to 7 also run in CI on every push and pull request, across Ubuntu,
+Fedora and Arch. Running them locally first is faster than waiting for a run,
+and it is the only way to check a change to the scripts themselves.
 
 5. Run native validation on a machine or dev shell with Nautilus API 4 headers:
 

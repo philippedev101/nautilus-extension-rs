@@ -136,6 +136,20 @@ surface, FFI behavior, or project structure:
 bash scripts/validation/all-fast.sh
 ```
 
+`.github/workflows/validation.yml` runs on every push and pull request:
+
+* **Fast validation** runs `all-fast.sh` without Nautilus installed, so it also
+  covers the unlinked build.
+* **Native Nautilus validation** runs `native-strong.sh` against a real Nautilus
+  on Ubuntu, Fedora and Arch, which is what catches API drift between distros.
+* **Minimum supported Rust version** compiles against the declared
+  `rust-version` with the committed lock file.
+* **Package validation** and **Semver policy** run the publish dry-run and the
+  API comparison.
+
+Running `all-fast.sh` locally is still worth it, because it is the fastest way
+to find a problem, and because CI cannot check the scripts it is itself running.
+
 Additional project maintenance docs:
 
 * [Nautilus 3 migration guide](docs/NAUTILUS_3_MIGRATION.md)
