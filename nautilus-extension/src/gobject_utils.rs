@@ -231,6 +231,14 @@ pub(crate) unsafe trait GObjectProperties {
         unsafe { set_string_property(object, property, value) }
     }
 
+    fn set_optional_string_property(&self, property: &str, value: Option<&str>) -> bool {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return false;
+        }
+        unsafe { set_optional_string_property(object, property, value) }
+    }
+
     fn bool_property(&self, property: &str) -> bool {
         let object = self.as_gobject();
         if object.is_null() {
@@ -277,6 +285,14 @@ pub(crate) unsafe trait GObjectProperties {
             return false;
         }
         unsafe { set_int_property(object, property, value) }
+    }
+
+    fn object_property<T>(&self, property: &str) -> Option<*mut T> {
+        let object = self.as_gobject();
+        if object.is_null() {
+            return None;
+        }
+        unsafe { get_object_property(object, property) }
     }
 
     fn quark_property(&self, property: &str) -> GQuark {

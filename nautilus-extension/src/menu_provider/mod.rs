@@ -3,10 +3,7 @@ use crate::gobject_ffi::{
     g_object_new, g_object_ref, g_object_unref, g_signal_connect_data, g_signal_handler_disconnect,
     GClosure, GObject,
 };
-use crate::gobject_utils::{
-    get_bool_property, get_object_property, get_string_property, set_bool_property,
-    set_optional_string_property, set_string_property,
-};
+use crate::gobject_utils::{set_bool_property, GObjectProperties};
 use crate::info_provider::FileInfo;
 use crate::nautilus_ffi::{
     nautilus_menu_append_item, nautilus_menu_get_items, nautilus_menu_get_type,

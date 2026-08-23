@@ -229,17 +229,17 @@ impl MenuItemObject {
 
     /// Returns the unique menu item name.
     pub fn name(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "name") }
+        self.string_property("name")
     }
 
     /// Returns the user-visible menu item label.
     pub fn label(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "label") }
+        self.string_property("label")
     }
 
     /// Sets the user-visible menu item label.
     pub fn set_label(&self, label: &str) -> bool {
-        unsafe { set_string_property(self.raw as *mut GObject, "label", label) }
+        self.set_string_property("label", label)
     }
 
     #[deprecated(
@@ -247,7 +247,7 @@ impl MenuItemObject {
     )]
     /// Returns the deprecated menu item tip.
     pub fn tip(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "tip") }
+        self.string_property("tip")
     }
 
     #[deprecated(
@@ -255,7 +255,7 @@ impl MenuItemObject {
     )]
     /// Sets the deprecated menu item tip.
     pub fn set_tip(&self, tip: Option<&str>) -> bool {
-        unsafe { set_optional_string_property(self.raw as *mut GObject, "tip", tip) }
+        self.set_optional_string_property("tip", tip)
     }
 
     #[deprecated(
@@ -263,7 +263,7 @@ impl MenuItemObject {
     )]
     /// Returns the deprecated menu item icon name.
     pub fn icon(&self) -> Option<String> {
-        unsafe { get_string_property(self.raw as *mut GObject, "icon") }
+        self.string_property("icon")
     }
 
     #[deprecated(
@@ -271,17 +271,17 @@ impl MenuItemObject {
     )]
     /// Sets the deprecated menu item icon name.
     pub fn set_icon(&self, icon: Option<&str>) -> bool {
-        unsafe { set_optional_string_property(self.raw as *mut GObject, "icon", icon) }
+        self.set_optional_string_property("icon", icon)
     }
 
     /// Returns whether the item is sensitive.
     pub fn sensitive(&self) -> bool {
-        unsafe { get_bool_property(self.raw as *mut GObject, "sensitive") }
+        self.bool_property("sensitive")
     }
 
     /// Sets whether the item is sensitive.
     pub fn set_sensitive(&self, sensitive: bool) -> bool {
-        unsafe { set_bool_property(self.raw as *mut GObject, "sensitive", sensitive) }
+        self.set_bool_property("sensitive", sensitive)
     }
 
     #[deprecated(
@@ -289,7 +289,7 @@ impl MenuItemObject {
     )]
     /// Returns the deprecated priority flag.
     pub fn priority(&self) -> bool {
-        unsafe { get_bool_property(self.raw as *mut GObject, "priority") }
+        self.bool_property("priority")
     }
 
     #[deprecated(
@@ -297,15 +297,22 @@ impl MenuItemObject {
     )]
     /// Sets the deprecated priority flag.
     pub fn set_priority(&self, priority: bool) -> bool {
-        unsafe { set_bool_property(self.raw as *mut GObject, "priority", priority) }
+        self.set_bool_property("priority", priority)
     }
 
     /// Returns the attached submenu, if any.
     pub fn submenu(&self) -> Option<MenuObject> {
-        unsafe {
-            get_object_property(self.raw as *mut GObject, "menu")
-                .and_then(|raw| MenuObject::from_raw_full(raw))
-        }
+        self.object_property("menu")
+            // SAFETY: the "menu" property is a full-transfer NautilusMenu.
+            .and_then(|raw| unsafe { MenuObject::from_raw_full(raw) })
+    }
+}
+
+// SAFETY: `raw` is null or a `NautilusMenuItem` this wrapper owns a reference
+// to, so it stays a live GObject for as long as the wrapper is borrowed.
+unsafe impl GObjectProperties for MenuItemObject {
+    fn as_gobject(&self) -> *mut GObject {
+        self.raw as *mut GObject
     }
 }
 
