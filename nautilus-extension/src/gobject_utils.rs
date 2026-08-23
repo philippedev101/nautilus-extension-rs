@@ -214,6 +214,11 @@ pub(crate) unsafe trait NautilusObject {
     fn as_raw(&self) -> *mut Self::Raw;
 
     /// Reads a getter that transfers ownership of a C string.
+    ///
+    /// The result is freed with `g_free`, so `get` must be transfer-full. In
+    /// the sys crate that is the getters declared `-> *mut c_char`; the
+    /// transfer-none ones return `*const c_char` and belong in
+    /// [`NautilusObject::borrowed_string`].
     fn owned_string(
         &self,
         get: unsafe extern "C" fn(*mut Self::Raw) -> *mut c_char,
@@ -226,6 +231,9 @@ pub(crate) unsafe trait NautilusObject {
     }
 
     /// Reads a getter that returns a borrowed C string.
+    ///
+    /// The result is copied and not freed, so `get` must be transfer-none: the
+    /// sys crate declares those `-> *const c_char`.
     fn borrowed_string(
         &self,
         get: unsafe extern "C" fn(*mut Self::Raw) -> *const c_char,
@@ -247,10 +255,15 @@ pub(crate) unsafe trait NautilusObject {
     }
 
     /// Reads a getter that returns a plain C value.
-    fn value<T: Default>(&self, get: unsafe extern "C" fn(*mut Self::Raw) -> T) -> T {
+    ///
+    /// `fallback` is returned for a null object. It is passed in rather than
+    /// taken from `Default` because zero is not the neutral value for every C
+    /// enum: `NautilusOperationComplete` is 0, so a `Default` fallback would
+    /// report success for a call that never happened.
+    fn value_or<T>(&self, get: unsafe extern "C" fn(*mut Self::Raw) -> T, fallback: T) -> T {
         let raw = self.as_raw();
         if raw.is_null() {
-            return T::default();
+            return fallback;
         }
         unsafe { get(raw) }
     }
@@ -265,6 +278,8 @@ pub(crate) unsafe trait NautilusObject {
     }
 
     /// Calls a getter that takes one string argument and returns an owned string.
+    ///
+    /// As with [`NautilusObject::owned_string`], `get` must be transfer-full.
     fn owned_string_for(
         &self,
         get: unsafe extern "C" fn(*mut Self::Raw, *const c_char) -> *mut c_char,

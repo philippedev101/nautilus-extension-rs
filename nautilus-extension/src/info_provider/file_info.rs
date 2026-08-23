@@ -167,12 +167,13 @@ impl FileInfo {
 
     /// Returns the Gio file type.
     pub fn file_type(&self) -> GFileType {
-        self.value(nautilus_file_info_get_file_type)
+        self.value_or(nautilus_file_info_get_file_type, G_FILE_TYPE_UNKNOWN)
     }
 
     /// Returns the Gio location object.
     pub fn location(&self) -> Option<OwnedGObject<GFile>> {
-        // SAFETY: the getter returns a full-transfer GFile.
+        // SAFETY: nautilus_file_info_get_location is transfer-full, so the
+        // pointer it returns through `pointer` is ours to own.
         unsafe { OwnedGObject::from_raw_full(self.pointer(nautilus_file_info_get_location)) }
     }
 
@@ -190,19 +191,22 @@ impl FileInfo {
 
     /// Returns the Gio location of the parent directory.
     pub fn parent_location(&self) -> Option<OwnedGObject<GFile>> {
-        // SAFETY: the getter returns a full-transfer GFile.
+        // SAFETY: nautilus_file_info_get_parent_location is transfer-full, so the
+        // pointer it returns through `pointer` is ours to own.
         unsafe { OwnedGObject::from_raw_full(self.pointer(nautilus_file_info_get_parent_location)) }
     }
 
     /// Returns the parent directory's file info.
     pub fn parent_info(&self) -> Option<FileInfo> {
-        // SAFETY: the getter returns a full-transfer NautilusFileInfo.
+        // SAFETY: nautilus_file_info_get_parent_info is transfer-full, so the
+        // pointer it returns through `pointer` is ours to own.
         unsafe { FileInfo::from_raw_full(self.pointer(nautilus_file_info_get_parent_info)) }
     }
 
     /// Returns the mount that contains this file.
     pub fn mount(&self) -> Option<OwnedGObject<GMount>> {
-        // SAFETY: the getter returns a full-transfer GMount.
+        // SAFETY: nautilus_file_info_get_mount is transfer-full, so the pointer it
+        // returns through `pointer` is ours to own.
         unsafe { OwnedGObject::from_raw_full(self.pointer(nautilus_file_info_get_mount)) }
     }
 

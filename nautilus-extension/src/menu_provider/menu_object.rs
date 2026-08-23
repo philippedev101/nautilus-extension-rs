@@ -339,11 +339,10 @@ impl MenuItem {
             return None;
         }
 
-        {
-            // SAFETY: `raw_menuitem` is a live NautilusMenuItem this scope owns.
-            // The borrowed wrapper only holds it while the properties are set.
-            let item = unsafe { MenuItemObject::from_raw_borrowed(raw_menuitem) }?;
-
+        // SAFETY: `raw_menuitem` is a live NautilusMenuItem this scope owns. The
+        // borrowed wrapper only holds it while the properties are set. This must
+        // not return early: the owned pointer would leak.
+        if let Some(item) = unsafe { MenuItemObject::from_raw_borrowed(raw_menuitem) } {
             item.set_bool_property("sensitive", self.sensitive);
 
             if let Some(priority) = self.priority {

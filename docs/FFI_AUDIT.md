@@ -85,6 +85,12 @@ The safe wrapper layer follows these transfer conventions:
   `g_list_free`.
 - GLib strings returned by Nautilus are consumed with `g_free` through
   `take_glib_string`.
+- The sys crate encodes string transfer in the return type: a getter declared
+  `*mut c_char` is transfer-full and its result is freed, a getter declared
+  `*const c_char` is transfer-none and its result is only copied. The
+  `NautilusObject::owned_string` and `borrowed_string` accessors rely on that
+  split, so a new binding must be declared with the pointer constness that
+  matches the Nautilus annotation.
 
 ## Linting Policy
 

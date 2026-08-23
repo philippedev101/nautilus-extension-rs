@@ -308,7 +308,8 @@ impl PropertiesModelObject {
 
     /// Returns the underlying `GListModel`.
     pub fn model(&self) -> Option<OwnedGObject<GListModel>> {
-        // SAFETY: the getter returns a borrowed GListModel.
+        // SAFETY: nautilus_properties_model_get_model is transfer-none, so the
+        // pointer it returns through `pointer` is borrowed and needs its own ref.
         unsafe {
             OwnedGObject::from_raw_borrowed(self.pointer(nautilus_properties_model_get_model))
         }
