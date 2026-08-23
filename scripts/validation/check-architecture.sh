@@ -37,8 +37,24 @@ done < <(
         -type d -print
 )
 
+# The build-mode cfg belongs to the sys crate alone. Everywhere else the two
+# builds share one code path and branch on NATIVE_API_AVAILABLE at run time.
+while IFS= read -r path; do
+    case "$path" in
+        ./nautilus-extension-sys/*) continue ;;
+    esac
+    echo "architecture: $path branches on nautilus_extension_rs_skip_link" >&2
+    echo "architecture: use the NATIVE_API_AVAILABLE constant instead" >&2
+    failed=1
+done < <(
+    grep -rl 'cfg(\(.*\)\?nautilus_extension_rs_skip_link' \
+        --include='*.rs' \
+        --exclude-dir=target \
+        . 2>/dev/null
+)
+
 if [ "$failed" -ne 0 ]; then
     exit 1
 fi
 
-echo "architecture: Rust source files are under ${max_lines} lines and source directories are not singleton"
+echo "architecture: Rust source files are under ${max_lines} lines, source directories are not singleton, and the build-mode cfg is confined to nautilus-extension-sys"

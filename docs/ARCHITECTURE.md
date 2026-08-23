@@ -23,6 +23,7 @@ source must not branch on the `nautilus_extension_rs_skip_link` cfg; where the
 two builds genuinely differ, branch on the public `NATIVE_API_AVAILABLE`
 constant at run time, and in tests use the `require_native_api!` and
 `require_unlinked_build!` guards.
+`check-architecture.sh` fails if that cfg appears outside `nautilus-extension-sys`.
 
 Rust source files should stay at or below 1000 lines. A directory that contains
 Rust source should contain more than one Rust source file; split tests or
