@@ -856,4 +856,29 @@ mod tests {
 
         assert_eq!(column.label().as_deref(), Some("Status"));
     }
+
+    #[test]
+    fn accessors_on_a_null_object_never_reach_glib() {
+        // Reaching GLib with a null object logs a critical, and the test run
+        // makes criticals fatal, so this aborts if a guard is ever dropped.
+        let column = ColumnObject {
+            raw: ptr::null_mut(),
+        };
+
+        assert_eq!(column.name(), None);
+        assert_eq!(column.attribute(), None);
+        assert_eq!(column.label(), None);
+        assert_eq!(column.description(), None);
+        assert_eq!(column.attribute_q(), 0);
+        assert!(!column.visible());
+        assert_eq!(column.xalign(), 0.0);
+        assert_eq!(column.default_sort_order(), ColumnSortOrder::Ascending);
+
+        assert!(!column.set_attribute("example_status"));
+        assert!(!column.set_label("Status"));
+        assert!(!column.set_description("Example status"));
+        assert!(!column.set_visible(true));
+        assert!(!column.set_xalign(0.5));
+        assert!(!column.set_default_sort_order(ColumnSortOrder::Descending));
+    }
 }

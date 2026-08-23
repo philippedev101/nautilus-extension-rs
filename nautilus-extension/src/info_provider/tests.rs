@@ -947,3 +947,34 @@ fn reset_info_provider_state_allows_slot_reuse() {
 
     reset_info_provider_state();
 }
+
+#[test]
+fn file_info_accessors_on_a_null_object_never_reach_glib() {
+    // Reaching GLib with a null object logs a critical, and the test run makes
+    // criticals fatal, so this aborts if a guard is ever dropped.
+    let file_info = FileInfo {
+        raw_file_info: ptr::null_mut(),
+    };
+
+    assert!(!file_info.is_gone());
+    assert_eq!(file_info.name(), None);
+    assert_eq!(file_info.uri(), None);
+    assert_eq!(file_info.parent_uri(), None);
+    assert_eq!(file_info.uri_scheme(), None);
+    assert_eq!(file_info.mime_type(), None);
+    assert!(!file_info.is_mime_type("text/plain"));
+    assert!(!file_info.is_directory());
+    assert_eq!(file_info.string_attribute("example"), None);
+    assert_eq!(file_info.activation_uri(), None);
+    assert!(!file_info.can_write());
+    assert!(file_info.location().is_none());
+    assert!(file_info.parent_location().is_none());
+    assert!(file_info.parent_info().is_none());
+    assert!(file_info.mount().is_none());
+
+    // `value_or` returns the fallback it was given, not `Default`.
+    assert_eq!(file_info.file_type(), G_FILE_TYPE_UNKNOWN);
+
+    file_info.add_emblem("important");
+    file_info.invalidate_extension_info();
+}

@@ -180,3 +180,24 @@ fn native_object_construction_round_trips_with_the_native_library() {
     assert_eq!(model.title().as_deref(), Some("Section"));
     assert_eq!(model.items().len(), 1);
 }
+
+#[test]
+fn accessors_on_a_null_object_never_reach_glib() {
+    // Reaching GLib with a null object logs a critical, and the test run makes
+    // criticals fatal, so this aborts if a guard is ever dropped.
+    let item = PropertiesItemObject {
+        raw: ptr::null_mut(),
+    };
+
+    assert_eq!(item.name(), None);
+    assert_eq!(item.value(), None);
+
+    let model = PropertiesModelObject {
+        raw: ptr::null_mut(),
+    };
+
+    assert_eq!(model.title(), None);
+    assert!(!model.set_title("Section"));
+    assert!(model.model().is_none());
+    assert!(model.items().is_empty());
+}

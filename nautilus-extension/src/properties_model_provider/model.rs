@@ -104,7 +104,7 @@ impl PropertiesModel {
 #[derive(Debug)]
 /// Owned reference to a `NautilusPropertiesItem` object.
 pub struct PropertiesItemObject {
-    raw: *mut NautilusPropertiesItem,
+    pub(crate) raw: *mut NautilusPropertiesItem,
 }
 
 impl PropertiesItemObject {
@@ -222,7 +222,7 @@ impl Drop for PropertiesItemObject {
 #[derive(Debug)]
 /// Owned reference to a `NautilusPropertiesModel` object.
 pub struct PropertiesModelObject {
-    raw: *mut NautilusPropertiesModel,
+    pub(crate) raw: *mut NautilusPropertiesModel,
 }
 
 impl PropertiesModelObject {

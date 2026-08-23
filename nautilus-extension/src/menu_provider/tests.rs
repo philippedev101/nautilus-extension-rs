@@ -501,3 +501,28 @@ fn native_object_construction_is_inert_in_no_link_mode() {
         .to_raw(&target)
         .is_null());
 }
+
+#[test]
+#[allow(deprecated)]
+fn menu_item_accessors_on_a_null_object_never_reach_glib() {
+    // Reaching GLib with a null object logs a critical, and the test run makes
+    // criticals fatal, so this aborts if a guard is ever dropped.
+    let item = MenuItemObject {
+        raw: ptr::null_mut(),
+    };
+
+    assert_eq!(item.name(), None);
+    assert_eq!(item.label(), None);
+    assert_eq!(item.tip(), None);
+    assert_eq!(item.icon(), None);
+    assert!(!item.sensitive());
+    assert!(!item.priority());
+    assert!(item.submenu().is_none());
+
+    assert!(!item.set_label("Label"));
+    assert!(!item.set_tip(Some("Tip")));
+    assert!(!item.set_tip(None));
+    assert!(!item.set_icon(Some("folder")));
+    assert!(!item.set_sensitive(true));
+    assert!(!item.set_priority(true));
+}
