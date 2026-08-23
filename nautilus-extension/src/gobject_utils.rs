@@ -7,8 +7,8 @@ use std::ptr;
 
 pub unsafe extern "C" fn unref_g_object(data: gpointer) {
     if !data.is_null() {
-        // SAFETY: the wrapper owns the reference being released and does not use the
-        // pointer again.
+        // SAFETY: GLib calls this as a `GDestroyNotify` with a pointer the list owned,
+        // and null was rejected just above.
         unsafe {
             g_object_unref(data as *mut GObject);
         }

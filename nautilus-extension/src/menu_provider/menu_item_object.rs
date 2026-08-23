@@ -117,8 +117,8 @@ impl MenuItemObject {
             return None;
         }
 
-        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
-        // sound.
+        // SAFETY: the caller guarantees the pointer is a live object, and null was rejected
+        // just above. This takes the reference the returned wrapper owns.
         unsafe {
             g_object_ref(raw as *mut GObject);
         }

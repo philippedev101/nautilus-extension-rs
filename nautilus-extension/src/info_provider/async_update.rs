@@ -169,16 +169,16 @@ impl OperationState {
         closure: *mut GClosure,
     ) -> OperationState {
         if !provider.is_null() {
-            // SAFETY: the wrapper holds a live reference to this object, so taking one more
-            // is sound.
+            // SAFETY: Nautilus supplied this pointer for the operation and it is non-null here.
+            // The state keeps its own reference until `cleanup_state` releases it.
             unsafe {
                 g_object_ref(provider as *mut GObject);
             }
         }
 
         if !file_info.is_null() {
-            // SAFETY: the wrapper holds a live reference to this object, so taking one more
-            // is sound.
+            // SAFETY: Nautilus supplied this pointer for the operation and it is non-null here.
+            // The state keeps its own reference until `cleanup_state` releases it.
             unsafe {
                 g_object_ref(file_info as *mut GObject);
             }

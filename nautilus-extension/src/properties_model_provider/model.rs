@@ -100,8 +100,8 @@ impl PropertiesModel {
             // copy of.
             unsafe { nautilus_properties_model_new(title.as_ptr(), store as *mut GListModel) };
 
-        // SAFETY: the wrapper owns the reference being released and does not use the
-        // pointer again.
+        // SAFETY: the model took its own reference to `store`, so the one this function
+        // created is released here and the pointer is not used again.
         unsafe {
             g_object_unref(store as *mut GObject);
         }
@@ -161,8 +161,8 @@ impl PropertiesItemObject {
             return None;
         }
 
-        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
-        // sound.
+        // SAFETY: the caller guarantees the pointer is a live object, and null was rejected
+        // just above. This takes the reference the returned wrapper owns.
         unsafe {
             g_object_ref(raw as *mut RawGObject);
         }
@@ -287,8 +287,8 @@ impl PropertiesModelObject {
             return None;
         }
 
-        // SAFETY: the wrapper holds a live reference to this object, so taking one more is
-        // sound.
+        // SAFETY: the caller guarantees the pointer is a live object, and null was rejected
+        // just above. This takes the reference the returned wrapper owns.
         unsafe {
             g_object_ref(raw as *mut RawGObject);
         }

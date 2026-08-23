@@ -1,3 +1,5 @@
+#![warn(clippy::undocumented_unsafe_blocks)]
+
 fn main() {
     println!("cargo:rerun-if-env-changed=NAUTILUS_EXTENSION_RS_SKIP_NAUTILUS4_PKG_CONFIG");
     println!("cargo:rerun-if-env-changed=DOCS_RS");

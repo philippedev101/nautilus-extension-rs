@@ -1,4 +1,5 @@
 #![no_main]
+#![warn(clippy::undocumented_unsafe_blocks)]
 
 use libfuzzer_sys::fuzz_target;
 use nautilus_extension::{

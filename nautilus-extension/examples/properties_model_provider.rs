@@ -1,3 +1,5 @@
+#![warn(clippy::undocumented_unsafe_blocks)]
+
 use nautilus_extension::gobject_ffi::GTypeModule;
 use nautilus_extension::{
     nautilus_module, FileInfo, NautilusModule, PropertiesItem, PropertiesModel,
