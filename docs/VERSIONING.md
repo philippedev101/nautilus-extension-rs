@@ -23,6 +23,11 @@ break existing `0.9.x` extension crates.
 4. `nautilus-extension-sys` tracks the C ABI names exactly.
 5. When Nautilus changes API 4.x, update `docs/API_TRACKING.md` and the static
    API surface checker in the same change.
+6. The minimum supported Rust version is declared as `rust-version` in both
+   manifests and pinned by the CI job that compiles against it. Raising it is a
+   breaking change for downstream crates, so it goes with a minor bump and a
+   `CHANGELOG.md` entry. `check-docs.sh` fails if the two manifests and the CI
+   pin disagree, so the bump is a single edit followed by the checks.
 
 ## Semver Checks
 

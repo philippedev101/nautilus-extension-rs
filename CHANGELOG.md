@@ -4,6 +4,7 @@
 
 * Ported the library to the Nautilus API 4 / GTK 4-era extension ABI used by
   Nautilus 43 and newer.
+* Require Rust 1.92, up from 1.57, and check it in CI.
 * Added wrappers for `PropertiesModelProvider`, model-backed properties items
   and models, asynchronous `InfoProvider` completion, operation handles,
   provider handles, and modern menu APIs.
