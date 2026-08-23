@@ -364,7 +364,8 @@ impl Menu {
     }
 
     pub(crate) fn to_raw(&self, target: &MenuActivationTarget) -> *mut NautilusMenu {
-        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
+        // SAFETY: `nautilus_menu_new` takes no arguments; the caller owns the returned
+        // reference and passes it on.
         let raw_menu = unsafe { nautilus_menu_new() };
 
         if raw_menu.is_null() {
@@ -373,7 +374,9 @@ impl Menu {
 
         for menu_item in &self.menu_items {
             if let Some(raw_menuitem) = menu_item.to_raw(target) {
-                // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
+                // SAFETY: `raw_menu` is the non-null menu created above and `raw_menuitem`
+                // a menu item this loop owns. Appending takes its own reference, so the
+                // one held here is released straight after.
                 unsafe {
                     nautilus_menu_append_item(raw_menu, raw_menuitem);
                     g_object_unref(raw_menuitem as *mut GObject);

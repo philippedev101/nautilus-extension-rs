@@ -98,10 +98,13 @@ The public crates enable:
 - `clippy::undocumented_unsafe_blocks`
 
 `clippy::undocumented_unsafe_blocks` makes the rule below enforceable rather than
-aspirational: every `unsafe` block outside test code carries a `// SAFETY:` line
-saying why it holds. Test modules opt out, because they build deliberately invalid
-pointers to exercise the guards that reject them and a per-block comment there
-would only restate the name of the test.
+aspirational: every `unsafe` block in the two library crates carries a `// SAFETY:`
+line saying why it holds. Test modules opt out, because they build deliberately
+invalid pointers to exercise the guards that reject them and a per-block comment
+there would only restate the name of the test. The lint is a crate-level attribute
+on each `lib.rs`, so it does not reach the examples, the build scripts, or the fuzz
+targets; none of those use `unsafe` today, and any that starts to should carry the
+attribute too.
 
 `unsafe_op_in_unsafe_fn` keeps unsafe operations visible even inside unsafe
 functions. Some callback and GObject integration code necessarily remains

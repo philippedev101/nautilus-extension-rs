@@ -357,7 +357,6 @@ pub(crate) mod test_support {
             .lock()
             .expect("provider-state test lock poisoned");
 
-        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_module_initialize(ptr::null_mut());
         }
@@ -365,7 +364,6 @@ pub(crate) mod test_support {
         let mut types: *const GType = ptr::null();
         let mut num_types = -1;
 
-        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
         unsafe {
             nautilus_module_list_types(&mut types, &mut num_types);
             nautilus_module_shutdown();

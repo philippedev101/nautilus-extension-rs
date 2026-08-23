@@ -184,8 +184,9 @@ impl OperationState {
             }
         }
 
-        // SAFETY: the context pointer is null-checked here, so reference counting it is
-        // sound.
+        // SAFETY: `g_main_context_ref_thread_default` already returns a reference this
+        // scope owns. When there is no thread-default it returns null, and the fallback
+        // takes its own reference on the global default instead.
         let main_context = unsafe {
             let context = g_main_context_ref_thread_default();
             if context.is_null() {
@@ -268,8 +269,9 @@ pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolea
     if let Some(update_file_info) = source.update_file_info.take() {
         let update_result = catch_unwind(AssertUnwindSafe(|| {
             if let Some(mut file_info) =
-                // SAFETY: Nautilus owns this pointer for the duration of the call, and
-                // `from_raw_borrowed` rejects null and takes its own reference.
+                // SAFETY: the operation state holds a reference to this file info until
+                // `cleanup_state` runs, and `from_raw_borrowed` rejects null and takes its
+                // own reference on top.
                 unsafe { FileInfo::from_raw_borrowed(source.state.file_info()) }
             {
                 update_file_info(&mut file_info);
@@ -283,8 +285,9 @@ pub(crate) unsafe extern "C" fn run_completion_source(data: gpointer) -> gboolea
         }
     }
 
-    // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the arguments
-    // outlive the call.
+    // SAFETY: the closure, provider and handle all belong to the Nautilus
+    // `update_file_info` call this completion was created for. `state.cleaned` is still
+    // false here, which is what keeps them alive until this call returns.
     unsafe {
         nautilus_info_provider_update_complete_invoke(
             source.state.closure(),
@@ -331,12 +334,12 @@ pub(crate) fn schedule_completion_source(source_data: CompletionSource) -> bool 
         None => return false,
     };
 
-    // SAFETY: the source was created here and is configured before anything else can
-    // observe it.
+    // SAFETY: `g_idle_source_new` takes no arguments and returns a source this scope
+    // owns.
     let source = unsafe { g_idle_source_new() };
     if source.is_null() {
-        // SAFETY: the context pointer is null-checked here, so reference counting it is
-        // sound.
+        // SAFETY: the source could not be created, so this releases the context
+        // reference `ref_main_context_for_source` took and nothing else holds it.
         unsafe {
             g_main_context_unref(context);
         }
@@ -427,7 +430,9 @@ pub(crate) fn cleanup_state(state: &OperationState) {
         return;
     }
 
-    // SAFETY: the wrapper owns the closure reference being released.
+    // SAFETY: the `cleaned` swap above makes this the only pass through here, so each
+    // reference the operation took — the closure, the file info, the provider and the
+    // main context — is released exactly once and not used again.
     unsafe {
         g_closure_unref(state.closure());
         if !state.file_info().is_null() {

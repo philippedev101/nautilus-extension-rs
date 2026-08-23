@@ -45,7 +45,7 @@ if ! grep -Fq "rust-version = \"$msrv\"" nautilus-extension-sys/Cargo.toml; then
     exit 1
 fi
 
-if ! grep -Fq "dtolnay/rust-toolchain@$msrv" .github/workflows/validation.yml; then
+if ! grep -Eq "^ +- uses: dtolnay/rust-toolchain@${msrv//./\.}$" .github/workflows/validation.yml; then
     echo "docs: no CI job pins the declared rust-version $msrv" >&2
     exit 1
 fi

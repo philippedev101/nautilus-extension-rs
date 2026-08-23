@@ -283,8 +283,9 @@ impl FileInfoList {
     /// `raw` must be either null or a valid borrowed `GList` containing
     /// `NautilusFileInfo` pointers.
     pub unsafe fn copy_from_raw(raw: *mut GList) -> Option<FileInfoList> {
-        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
-        // of.
+        // SAFETY: the caller guarantees `raw` is null or a borrowed `NautilusFileInfo`
+        // GList, which is what `nautilus_file_info_list_copy` requires. The copy it
+        // returns is transfer-full, so the wrapper takes ownership of it.
         unsafe { FileInfoList::from_raw_full(nautilus_file_info_list_copy(raw)) }
     }
 
@@ -426,8 +427,8 @@ impl FileInfoHandle {
 
     /// Converts this borrowed handle into an owned [`FileInfo`] reference.
     pub fn to_owned(&self) -> Option<FileInfo> {
-        // SAFETY: Nautilus owns this pointer for the duration of the call, and
-        // `from_raw_borrowed` rejects null and takes its own reference.
+        // SAFETY: this wrapper owns a reference to `raw_file_info`, so borrowing it for
+        // another wrapper is sound; `from_raw_borrowed` takes its own reference.
         unsafe { FileInfo::from_raw_borrowed(self.raw_file_info) }
     }
 }

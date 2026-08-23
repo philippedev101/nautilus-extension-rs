@@ -27,7 +27,8 @@ impl PropertiesItem {
         let name = CString::new(&self.name as &str).ok()?;
         let value = CString::new(&self.value as &str).ok()?;
 
-        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
+        // SAFETY: `name` and `value` are `CString`s that live to the end of this
+        // function, so their pointers stay valid across the call.
         let item = unsafe { nautilus_properties_item_new(name.as_ptr(), value.as_ptr()) };
 
         // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
@@ -94,7 +95,9 @@ impl PropertiesModel {
         }
 
         let model =
-            // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
+            // SAFETY: `title` lives to the end of this function and `store` is the
+            // non-null list store built above, whose reference Nautilus takes its own
+            // copy of.
             unsafe { nautilus_properties_model_new(title.as_ptr(), store as *mut GListModel) };
 
         // SAFETY: the wrapper owns the reference being released and does not use the

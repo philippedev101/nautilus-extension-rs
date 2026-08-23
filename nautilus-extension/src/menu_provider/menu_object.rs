@@ -16,8 +16,8 @@ impl MenuObject {
 
     /// Creates an empty native `NautilusMenu` object.
     pub fn new() -> Option<MenuObject> {
-        // SAFETY: the string arguments are NUL-terminated and live across the call, and the
-        // constructor returns a transfer-full reference the wrapper takes ownership of.
+        // SAFETY: `nautilus_menu_new` takes no arguments and returns a transfer-full
+        // reference, so the wrapper takes ownership of it.
         unsafe { MenuObject::from_raw_full(nautilus_menu_new()) }
     }
 
@@ -373,7 +373,9 @@ impl MenuItem {
         if let Some(submenu) = &self.submenu {
             let raw_submenu = submenu.to_raw(target);
             if !raw_submenu.is_null() {
-                // SAFETY: `self.raw` is the live Nautilus object this wrapper owns.
+                // SAFETY: `raw_menuitem` is the non-null item created above and
+                // `raw_submenu` a menu this scope owns. Attaching takes its own
+                // reference, so the one held here is released immediately after.
                 unsafe {
                     nautilus_menu_item_set_submenu(raw_menuitem, raw_submenu);
                     g_object_unref(raw_submenu as *mut GObject);
@@ -420,8 +422,8 @@ pub(crate) fn new_menu_item_raw(
                 ) as *mut NautilusMenuItem
             }
         }
-        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the
-        // arguments outlive the call.
+        // SAFETY: the `CString` arguments live to the end of the caller, so their
+        // pointers stay valid across the call.
         None => unsafe {
             nautilus_menu_item_new(
                 name.as_ptr(),

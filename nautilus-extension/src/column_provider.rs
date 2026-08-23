@@ -125,8 +125,8 @@ impl Column {
         let label = CString::new(&self.label as &str).ok()?;
         let description = CString::new(&self.description as &str).ok()?;
 
-        // SAFETY: `self.raw` is the live Nautilus object this wrapper owns, and the
-        // arguments outlive the call.
+        // SAFETY: the four `CString`s live until the end of this function, so their
+        // pointers stay valid across the call.
         let column = unsafe {
             nautilus_column_new(
                 name.as_ptr(),
@@ -766,17 +766,9 @@ mod tests {
 
     #[test]
     fn column_object_rejects_null_raw_pointers() {
-        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
-        // of.
         assert!(unsafe { ColumnObject::from_raw_full(ptr::null_mut()) }.is_none());
-        // SAFETY: Nautilus owns this pointer for the duration of the call, and
-        // `from_raw_borrowed` rejects null and takes its own reference.
         assert!(unsafe { ColumnObject::from_raw_borrowed(ptr::null_mut()) }.is_none());
-        // SAFETY: the pointer is a full-transfer reference that this scope takes ownership
-        // of.
         assert!(unsafe { ColumnProviderHandle::from_raw_full(ptr::null_mut()) }.is_none());
-        // SAFETY: Nautilus owns this pointer for the duration of the call, and
-        // `from_raw_borrowed` rejects null and takes its own reference.
         assert!(unsafe { ColumnProviderHandle::from_raw_borrowed(ptr::null_mut()) }.is_none());
     }
 
