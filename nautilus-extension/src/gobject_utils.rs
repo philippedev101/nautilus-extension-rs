@@ -21,183 +21,6 @@ pub unsafe fn free_owned_g_object_list(list: *mut GList) {
     }
 }
 
-pub unsafe fn get_string_property(object: *mut GObject, property: &str) -> Option<String> {
-    let property = CString::new(property).ok()?;
-    let mut value: *mut c_char = ptr::null_mut();
-
-    unsafe {
-        g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
-    }
-
-    unsafe { take_glib_string(value) }
-}
-
-pub unsafe fn set_string_property(object: *mut GObject, property: &str, value: &str) -> bool {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return false,
-    };
-    let value = match CString::new(value) {
-        Ok(value) => value,
-        Err(_) => return false,
-    };
-
-    unsafe {
-        g_object_set(
-            object,
-            property.as_ptr(),
-            value.as_ptr(),
-            ptr::null::<c_char>(),
-        );
-    }
-    true
-}
-
-pub unsafe fn set_optional_string_property(
-    object: *mut GObject,
-    property: &str,
-    value: Option<&str>,
-) -> bool {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return false,
-    };
-    let value = match value {
-        Some(value) => match CString::new(value) {
-            Ok(value) => Some(value),
-            Err(_) => return false,
-        },
-        None => None,
-    };
-
-    unsafe {
-        g_object_set(
-            object,
-            property.as_ptr(),
-            value
-                .as_ref()
-                .map(|value| value.as_ptr())
-                .unwrap_or(ptr::null()),
-            ptr::null::<c_char>(),
-        );
-    }
-
-    true
-}
-
-pub unsafe fn get_bool_property(object: *mut GObject, property: &str) -> bool {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return false,
-    };
-    let mut value: gboolean = GFALSE;
-
-    unsafe {
-        g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
-    }
-
-    value != GFALSE
-}
-
-pub unsafe fn set_bool_property(object: *mut GObject, property: &str, value: bool) -> bool {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return false,
-    };
-
-    unsafe {
-        g_object_set(
-            object,
-            property.as_ptr(),
-            if value { GTRUE } else { GFALSE },
-            ptr::null::<c_char>(),
-        );
-    }
-
-    true
-}
-
-pub unsafe fn get_float_property(object: *mut GObject, property: &str) -> c_float {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return 0.0,
-    };
-    let mut value: c_float = 0.0;
-
-    unsafe {
-        g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
-    }
-
-    value
-}
-
-pub unsafe fn set_double_property(object: *mut GObject, property: &str, value: c_double) -> bool {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return false,
-    };
-
-    unsafe {
-        g_object_set(object, property.as_ptr(), value, ptr::null::<c_char>());
-    }
-    true
-}
-
-pub unsafe fn get_int_property(object: *mut GObject, property: &str) -> c_int {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return 0,
-    };
-    let mut value: c_int = 0;
-
-    unsafe {
-        g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
-    }
-
-    value
-}
-
-pub unsafe fn set_int_property(object: *mut GObject, property: &str, value: c_int) -> bool {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return false,
-    };
-
-    unsafe {
-        g_object_set(object, property.as_ptr(), value, ptr::null::<c_char>());
-    }
-    true
-}
-
-pub unsafe fn get_quark_property(object: *mut GObject, property: &str) -> GQuark {
-    let property = match CString::new(property) {
-        Ok(property) => property,
-        Err(_) => return 0,
-    };
-    let mut value: GQuark = 0;
-
-    unsafe {
-        g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
-    }
-
-    value
-}
-
-pub unsafe fn get_object_property<T>(object: *mut GObject, property: &str) -> Option<*mut T> {
-    let property = CString::new(property).ok()?;
-    let mut value: *mut T = ptr::null_mut();
-
-    unsafe {
-        g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
-    }
-
-    if value.is_null() {
-        None
-    } else {
-        Some(value)
-    }
-}
-
 /// Safe GObject property access for the owned object wrappers.
 ///
 /// The wrappers all hold a raw GObject pointer and all read and write
@@ -215,92 +38,158 @@ pub(crate) unsafe trait GObjectProperties {
     /// Returns the wrapped object as a raw GObject pointer.
     fn as_gobject(&self) -> *mut GObject;
 
-    fn string_property(&self, property: &str) -> Option<String> {
+    /// Returns the live object and the property name as a C string, or `None`
+    /// when either is unusable.
+    fn property_target(&self, property: &str) -> Option<(*mut GObject, CString)> {
         let object = self.as_gobject();
         if object.is_null() {
             return None;
         }
-        unsafe { get_string_property(object, property) }
+        Some((object, CString::new(property).ok()?))
+    }
+
+    fn string_property(&self, property: &str) -> Option<String> {
+        let (object, property) = self.property_target(property)?;
+        let mut value: *mut c_char = ptr::null_mut();
+        unsafe {
+            g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
+            take_glib_string(value)
+        }
     }
 
     fn set_string_property(&self, property: &str, value: &str) -> bool {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return false;
+        };
+        let Ok(value) = CString::new(value) else {
+            return false;
+        };
+        unsafe {
+            g_object_set(
+                object,
+                property.as_ptr(),
+                value.as_ptr(),
+                ptr::null::<c_char>(),
+            );
         }
-        unsafe { set_string_property(object, property, value) }
+        true
     }
 
     fn set_optional_string_property(&self, property: &str, value: Option<&str>) -> bool {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return false;
+        };
+        let value = match value {
+            Some(value) => match CString::new(value) {
+                Ok(value) => Some(value),
+                Err(_) => return false,
+            },
+            None => None,
+        };
+        unsafe {
+            g_object_set(
+                object,
+                property.as_ptr(),
+                value
+                    .as_ref()
+                    .map(|value| value.as_ptr())
+                    .unwrap_or(ptr::null()),
+                ptr::null::<c_char>(),
+            );
         }
-        unsafe { set_optional_string_property(object, property, value) }
+        true
     }
 
     fn bool_property(&self, property: &str) -> bool {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return false;
+        };
+        let mut value: gboolean = GFALSE;
+        unsafe {
+            g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
-        unsafe { get_bool_property(object, property) }
+        value != GFALSE
     }
 
     fn set_bool_property(&self, property: &str, value: bool) -> bool {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return false;
+        };
+        unsafe {
+            g_object_set(
+                object,
+                property.as_ptr(),
+                if value { GTRUE } else { GFALSE },
+                ptr::null::<c_char>(),
+            );
         }
-        unsafe { set_bool_property(object, property, value) }
+        true
     }
 
     fn float_property(&self, property: &str) -> c_float {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return 0.0;
+        };
+        let mut value: c_float = 0.0;
+        unsafe {
+            g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
-        unsafe { get_float_property(object, property) }
+        value
     }
 
     fn set_double_property(&self, property: &str, value: c_double) -> bool {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return false;
+        };
+        unsafe {
+            g_object_set(object, property.as_ptr(), value, ptr::null::<c_char>());
         }
-        unsafe { set_double_property(object, property, value) }
+        true
     }
 
     fn int_property(&self, property: &str) -> c_int {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return 0;
+        };
+        let mut value: c_int = 0;
+        unsafe {
+            g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
-        unsafe { get_int_property(object, property) }
+        value
     }
 
     fn set_int_property(&self, property: &str, value: c_int) -> bool {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return false;
+        };
+        unsafe {
+            g_object_set(object, property.as_ptr(), value, ptr::null::<c_char>());
         }
-        unsafe { set_int_property(object, property, value) }
-    }
-
-    fn object_property<T>(&self, property: &str) -> Option<*mut T> {
-        let object = self.as_gobject();
-        if object.is_null() {
-            return None;
-        }
-        unsafe { get_object_property(object, property) }
+        true
     }
 
     fn quark_property(&self, property: &str) -> GQuark {
-        let object = self.as_gobject();
-        if object.is_null() {
+        let Some((object, property)) = self.property_target(property) else {
             return 0;
+        };
+        let mut value: GQuark = 0;
+        unsafe {
+            g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
         }
-        unsafe { get_quark_property(object, property) }
+        value
+    }
+
+    fn object_property<T>(&self, property: &str) -> Option<*mut T> {
+        let (object, property) = self.property_target(property)?;
+        let mut value: *mut T = ptr::null_mut();
+        unsafe {
+            g_object_get(object, property.as_ptr(), &mut value, ptr::null::<c_char>());
+        }
+        if value.is_null() {
+            None
+        } else {
+            Some(value)
+        }
     }
 }
 

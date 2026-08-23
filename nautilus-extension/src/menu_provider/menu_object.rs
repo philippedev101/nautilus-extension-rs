@@ -339,11 +339,15 @@ impl MenuItem {
             return None;
         }
 
-        unsafe {
-            set_bool_property(raw_menuitem as *mut GObject, "sensitive", self.sensitive);
+        {
+            // SAFETY: `raw_menuitem` is a live NautilusMenuItem this scope owns.
+            // The borrowed wrapper only holds it while the properties are set.
+            let item = unsafe { MenuItemObject::from_raw_borrowed(raw_menuitem) }?;
+
+            item.set_bool_property("sensitive", self.sensitive);
 
             if let Some(priority) = self.priority {
-                set_bool_property(raw_menuitem as *mut GObject, "priority", priority);
+                item.set_bool_property("priority", priority);
             }
         }
 
