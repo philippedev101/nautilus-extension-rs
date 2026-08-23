@@ -18,6 +18,11 @@ reports `None`, `false`, and `OperationResult::Failed` without a second code
 path. Nothing in the wrapper crates is compiled conditionally on that build
 mode; the public `NATIVE_API_AVAILABLE` constant is the run-time signal.
 
+The unit test run sets `G_DEBUG=fatal-warnings,fatal-criticals`. A wrapper that
+hands GLib a stub value often still returns the right answer, so the GLib
+critical is the only signal that something reached GLib which should have been
+rejected first; making it fatal turns that into a test failure.
+
 ## C ABI Entry Points
 
 The `nautilus_module!` macro exports the required Nautilus symbols:

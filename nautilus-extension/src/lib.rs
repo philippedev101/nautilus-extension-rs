@@ -331,6 +331,17 @@ pub(crate) mod test_support {
 
     pub(crate) use {require_native_api, require_unlinked_build};
 
+    /// Ties the advertised build mode to what the Nautilus GTypes actually
+    /// report, so the constant and the stubs cannot drift apart.
+    #[test]
+    fn native_api_availability_matches_the_registered_gtypes() {
+        let registered = crate::ColumnObject::type_() != 0
+            && crate::MenuObject::type_() != 0
+            && crate::PropertiesModelObject::type_() != 0;
+
+        assert_eq!(crate::NATIVE_API_AVAILABLE, registered);
+    }
+
     fn panicking_register(_module: *mut GTypeModule) -> GType {
         panic!("module registration panic");
     }

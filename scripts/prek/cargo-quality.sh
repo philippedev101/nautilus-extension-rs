@@ -74,6 +74,14 @@ run_with_rustdoc_warnings_denied() {
     "${CARGO_CMD[@]}" "$@"
 }
 
+# A GLib critical means a wrapper handed GLib something it should have rejected
+# first, such as a stub GType in a build without the native Nautilus library.
+# The safe API often still answers correctly, so the run has to abort instead.
+run_tests_with_glib_criticals_fatal() {
+    export G_DEBUG="${G_DEBUG:-fatal-warnings,fatal-criticals}"
+    run_with_rust_warnings_denied "$@"
+}
+
 case "${1:-}" in
     fmt)
         "${CARGO_CMD[@]}" fmt -- --check
@@ -82,10 +90,10 @@ case "${1:-}" in
         run_with_rust_warnings_denied clippy --all-targets -- -D warnings
         ;;
     test)
-        run_with_rust_warnings_denied test --all-targets
+        run_tests_with_glib_criticals_fatal test --all-targets
         ;;
     doctest)
-        run_with_rust_warnings_denied test --doc -p nautilus-extension
+        run_tests_with_glib_criticals_fatal test --doc -p nautilus-extension
         ;;
     doc)
         run_with_rustdoc_warnings_denied doc --no-deps

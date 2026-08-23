@@ -478,3 +478,26 @@ fn menu_item_activate_slots_reuse_out_of_order_releases() {
 
     reset_menu_item_activate_state();
 }
+
+#[test]
+#[allow(deprecated)]
+fn native_object_construction_is_inert_in_no_link_mode() {
+    require_unlinked_build!();
+
+    let target = MenuActivationTarget::Files(Vec::new());
+
+    assert!(MenuObject::new().is_none());
+    assert!(MenuItemObject::new("Example::item", "Item").is_none());
+    assert!(
+        MenuItemObject::new_full("Example::item", "Item", Some("Tip"), Some("folder")).is_none()
+    );
+    assert!(MenuItem::new("Example::item", "Item")
+        .to_object(&target)
+        .is_none());
+    assert!(Menu::new(vec![MenuItem::new("Example::item", "Item")])
+        .to_object(&target)
+        .is_none());
+    assert!(Menu::new(vec![MenuItem::new("Example::item", "Item")])
+        .to_raw(&target)
+        .is_null());
+}

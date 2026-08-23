@@ -840,4 +840,27 @@ mod tests {
 
         reset_column_provider_state();
     }
+
+    #[test]
+    fn native_object_construction_is_inert_in_no_link_mode() {
+        require_unlinked_build!();
+
+        assert!(ColumnObject::new("Example::status", "example_status", "Status", "Desc").is_none());
+        assert!(
+            Column::new("Example::status", "example_status", "Status", "Desc")
+                .to_object()
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn native_object_construction_round_trips_with_the_native_library() {
+        require_native_api!();
+
+        let column = Column::new("Example::status", "example_status", "Status", "Desc")
+            .to_object()
+            .expect("column should be constructible");
+
+        assert_eq!(column.label().as_deref(), Some("Status"));
+    }
 }

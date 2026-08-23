@@ -150,3 +150,33 @@ fn reset_properties_model_provider_state_allows_slot_reuse() {
 
     reset_properties_model_provider_state();
 }
+
+#[test]
+fn native_object_construction_is_inert_in_no_link_mode() {
+    require_unlinked_build!();
+
+    assert!(PropertiesItemObject::new("Name", "Value").is_none());
+    assert!(PropertiesItem::new("Name", "Value").to_object().is_none());
+
+    let model = PropertiesModel::new("Section", vec![PropertiesItem::new("Name", "Value")]);
+
+    assert!(model.to_object().is_none());
+    assert!(model.to_raw().is_none());
+}
+
+#[test]
+fn native_object_construction_round_trips_with_the_native_library() {
+    require_native_api!();
+
+    let item = PropertiesItemObject::new("Name", "Value").expect("item should be constructible");
+
+    assert_eq!(item.name().as_deref(), Some("Name"));
+    assert_eq!(item.value().as_deref(), Some("Value"));
+
+    let model = PropertiesModel::new("Section", vec![PropertiesItem::new("Row", "Value")])
+        .to_object()
+        .expect("model should be constructible");
+
+    assert_eq!(model.title().as_deref(), Some("Section"));
+    assert_eq!(model.items().len(), 1);
+}
