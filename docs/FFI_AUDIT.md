@@ -94,7 +94,7 @@ bash scripts/validation/valgrind.sh
 bash scripts/validation/fuzz-smoke.sh
 ```
 
-The sanitizer suppression file is limited to known upstream Nautilus allocation
+The sanitizer suppression file is limited to known Nautilus allocation
 behavior observed while loading example modules. New leaks in Rust-owned
 objects should be fixed rather than suppressed.
 

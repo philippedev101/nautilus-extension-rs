@@ -3,7 +3,7 @@
 This audit applies to the Nautilus API 4 Rust wrapper surface.
 
 The Nautilus extension ABI is a GObject C API, so several provider method names
-intentionally mirror upstream names:
+intentionally mirror the Nautilus C API names:
 
 - `ColumnProvider::get_columns`
 - `MenuProvider::get_file_items`

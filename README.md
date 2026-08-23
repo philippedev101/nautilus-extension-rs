@@ -3,10 +3,10 @@
 Rust bindings for the modern Nautilus extension API used by Nautilus 43 and
 newer.
 
-This branch targets the Nautilus API 4 ABI:
+This crate targets the Nautilus API 4 ABI:
 
 * pkg-config: `libnautilus-extension-4` on many distributions; current
-  upstream documentation also lists `libnautilus-extension`
+  Nautilus documentation also lists `libnautilus-extension`
 * shared library: `libnautilus-extension.so.4`
 * GObject introspection namespace: `Nautilus-4.0` or `Nautilus-4.1`
 * extension install directory: `nautilus/extensions-4`
@@ -66,7 +66,7 @@ The obsolete Nautilus 3 APIs are intentionally not part of the primary API:
 * no GTK-widget `PropertyPageProvider`
 * no `GtkWidget`/window argument in menu provider callbacks
 
-The old upstream `0.8.0` crate targeted Nautilus 3. Code using the old property
+Version `0.8.0` of this crate targeted Nautilus 3. Code using the old property
 page or menu signatures needs source changes for Nautilus 4.
 
 ## Requirements

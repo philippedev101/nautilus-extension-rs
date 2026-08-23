@@ -1,8 +1,8 @@
 # Migrating from Nautilus 3 Bindings
 
-The original `nautilus-extension` crate targeted the Nautilus 3 / GTK 3
-extension API. This branch targets Nautilus API 4, introduced with Nautilus 43
-and the GTK 4 port.
+Version `0.8.0` and earlier of `nautilus-extension` targeted the Nautilus 3 /
+GTK 3 extension API. This crate now targets Nautilus API 4, introduced with
+Nautilus 43 and the GTK 4 port.
 
 Nautilus itself did not become "Nautilus 4"; the extension API and ABI did.
 
@@ -25,7 +25,7 @@ This crate does not reintroduce those obsolete GTK 3 APIs.
 
 | Nautilus 3 API | Nautilus API 4 replacement |
 | --- | --- |
-| `LocationWidgetProvider` | removed upstream; no replacement in this crate |
+| `LocationWidgetProvider` | removed by Nautilus; no replacement in this crate |
 | GTK-widget `PropertyPageProvider` | `PropertiesModelProvider` |
 | menu provider callbacks with a window argument | `MenuProvider` callbacks without a window argument |
 | GTK 3 dependency in extension crates | no GTK 3 dependency |
