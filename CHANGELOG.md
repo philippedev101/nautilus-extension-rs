@@ -18,6 +18,10 @@
   source has one code path for both linked and unlinked builds.
 * Added the public `NATIVE_API_AVAILABLE` constant for the few places that must
   behave differently without the native Nautilus library.
+* Documented the linked API on docs.rs rather than the unlinked stubs.
+* Made GLib criticals fail the unit test run, so a wrapper that hands GLib a
+  value it should have rejected is caught even when the safe API still returns
+  the right answer.
 
 ## 0.8.0 (2022-07-27)
 

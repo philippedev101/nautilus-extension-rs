@@ -20,7 +20,8 @@ bash scripts/validation/all-fast.sh
 
 This includes formatting, architecture shape checks, documentation metadata,
 API surface coverage, clippy, tests, doctests, docs, docs.rs simulation,
-example symbol checks, and whitespace validation.
+example symbol checks, and whitespace validation. The tests run with
+`G_DEBUG=fatal-warnings,fatal-criticals`, so a GLib critical fails the suite.
 
 5. Run native validation on a machine or dev shell with Nautilus API 4 headers:
 

@@ -53,6 +53,8 @@ objects:
   advanced direct calls into Nautilus provider interfaces
 * `type_()` accessors on the object/provider handle wrappers for the documented
   Nautilus `*_get_type()` functions
+* `NATIVE_API_AVAILABLE`, which reports whether this build links against the
+  native Nautilus library
 
 The `nautilus_module!` macro exports the required C ABI symbols:
 `nautilus_module_initialize`, `nautilus_module_list_types`, and

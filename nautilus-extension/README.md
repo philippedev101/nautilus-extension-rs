@@ -44,6 +44,10 @@ Install the Nautilus extension development package for your distribution:
 The build probes `libnautilus-extension-4` first and then
 `libnautilus-extension`, requiring Nautilus 43+ pkg-config metadata.
 
+Without that package the crate still compiles, which is what docs.rs and
+Nautilus-less CI images use, but every Nautilus call is an inert stub. Check
+`NATIVE_API_AVAILABLE` if your own code needs to tell the two apart.
+
 ## Example
 
 ```rust
