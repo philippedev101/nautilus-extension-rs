@@ -4,7 +4,7 @@ use crate::gio_ffi::{
 };
 use crate::glib_ffi::{g_list_append, g_list_free, gpointer, GList, GType};
 use crate::gobject_ffi::{g_object_ref, g_object_unref, GObject, GObject as RawGObject};
-use crate::gobject_utils::free_owned_g_object_list;
+use crate::gobject_utils::{free_owned_g_object_list, NautilusObject};
 use crate::info_provider::{FileInfo, OwnedGObject};
 use crate::nautilus_ffi::NATIVE_API_AVAILABLE;
 use crate::nautilus_ffi::{
@@ -17,7 +17,7 @@ use crate::nautilus_ffi::{
     NautilusPropertiesModelProvider, NautilusPropertiesModelProviderIface,
 };
 use crate::slot_allocator::{release_slot, reset_slots, take_next_slot};
-use crate::translate::{borrowed_string, file_info_vec_from_g_list, vec_from_g_list};
+use crate::translate::{file_info_vec_from_g_list, vec_from_g_list};
 use libc::c_void;
 use std::borrow::Cow;
 use std::ffi::CString;

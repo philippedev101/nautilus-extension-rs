@@ -180,12 +180,22 @@ impl PropertiesItemObject {
 
     /// Returns the row name.
     pub fn name(&self) -> Option<String> {
-        unsafe { borrowed_string(nautilus_properties_item_get_name(self.raw)) }
+        self.borrowed_string(nautilus_properties_item_get_name)
     }
 
     /// Returns the row value.
     pub fn value(&self) -> Option<String> {
-        unsafe { borrowed_string(nautilus_properties_item_get_value(self.raw)) }
+        self.borrowed_string(nautilus_properties_item_get_value)
+    }
+}
+
+// SAFETY: `raw` is null or a `NautilusPropertiesItem` this wrapper owns a
+// reference to, so it stays live for as long as the wrapper is borrowed.
+unsafe impl NautilusObject for PropertiesItemObject {
+    type Raw = NautilusPropertiesItem;
+
+    fn as_raw(&self) -> *mut NautilusPropertiesItem {
+        self.raw
     }
 }
 
@@ -288,26 +298,20 @@ impl PropertiesModelObject {
 
     /// Returns the user-visible section title.
     pub fn title(&self) -> Option<String> {
-        unsafe { borrowed_string(nautilus_properties_model_get_title(self.raw)) }
+        self.borrowed_string(nautilus_properties_model_get_title)
     }
 
     /// Sets the user-visible section title.
     pub fn set_title(&self, title: &str) -> bool {
-        let title = match CString::new(title) {
-            Ok(title) => title,
-            Err(_) => return false,
-        };
-
-        unsafe {
-            nautilus_properties_model_set_title(self.raw, title.as_ptr());
-        }
-
-        true
+        self.call_with_string(nautilus_properties_model_set_title, title)
     }
 
     /// Returns the underlying `GListModel`.
     pub fn model(&self) -> Option<OwnedGObject<GListModel>> {
-        unsafe { OwnedGObject::from_raw_borrowed(nautilus_properties_model_get_model(self.raw)) }
+        // SAFETY: the getter returns a borrowed GListModel.
+        unsafe {
+            OwnedGObject::from_raw_borrowed(self.pointer(nautilus_properties_model_get_model))
+        }
     }
 
     /// Returns the properties items in the underlying model.
@@ -332,6 +336,16 @@ impl PropertiesModelObject {
         }
 
         items
+    }
+}
+
+// SAFETY: `raw` is null or a `NautilusPropertiesModel` this wrapper owns a
+// reference to, so it stays live for as long as the wrapper is borrowed.
+unsafe impl NautilusObject for PropertiesModelObject {
+    type Raw = NautilusPropertiesModel;
+
+    fn as_raw(&self) -> *mut NautilusPropertiesModel {
+        self.raw
     }
 }
 

@@ -122,7 +122,7 @@ impl FileInfo {
 
     /// Adds an emblem by icon name.
     pub fn add_emblem(&self, emblem_name: &str) {
-        self.call_with_string(nautilus_file_info_add_emblem, emblem_name)
+        self.call_with_string(nautilus_file_info_add_emblem, emblem_name);
     }
 
     /// Returns a string attribute previously known to Nautilus.

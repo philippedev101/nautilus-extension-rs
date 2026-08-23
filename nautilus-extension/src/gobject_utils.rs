@@ -1,6 +1,6 @@
 use crate::glib_ffi::{g_list_free_full, gboolean, gpointer, GList, GQuark, GFALSE, GTRUE};
 use crate::gobject_ffi::{g_object_get, g_object_set, g_object_unref, GObject};
-use crate::translate::take_glib_string;
+use crate::translate::{borrowed_string, take_glib_string};
 use libc::{c_char, c_double, c_float, c_int};
 use std::ffi::CString;
 use std::ptr;
@@ -336,6 +336,18 @@ pub(crate) unsafe trait NautilusObject {
         unsafe { take_glib_string(get(raw)) }
     }
 
+    /// Reads a getter that returns a borrowed C string.
+    fn borrowed_string(
+        &self,
+        get: unsafe extern "C" fn(*mut Self::Raw) -> *const c_char,
+    ) -> Option<String> {
+        let raw = self.as_raw();
+        if raw.is_null() {
+            return None;
+        }
+        unsafe { borrowed_string(get(raw)) }
+    }
+
     /// Reads a getter that returns a C boolean.
     fn flag(&self, get: unsafe extern "C" fn(*mut Self::Raw) -> gboolean) -> bool {
         let raw = self.as_raw();
@@ -394,19 +406,23 @@ pub(crate) unsafe trait NautilusObject {
     }
 
     /// Calls a setter that takes one string argument.
+    ///
+    /// Returns whether the call was made: a null object or an argument that is
+    /// not a valid C string leaves the object untouched.
     fn call_with_string(
         &self,
         call: unsafe extern "C" fn(*mut Self::Raw, *const c_char),
         argument: &str,
-    ) {
+    ) -> bool {
         let raw = self.as_raw();
         if raw.is_null() {
-            return;
+            return false;
         }
         let Ok(argument) = CString::new(argument) else {
-            return;
+            return false;
         };
         unsafe { call(raw, argument.as_ptr()) }
+        true
     }
 
     /// Calls a method that takes no arguments and returns nothing.
