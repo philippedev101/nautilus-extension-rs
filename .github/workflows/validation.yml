@@ -64,6 +64,13 @@ jobs:
       - name: Install base dependencies
         run: dnf install -y gcc git pkgconf-pkg-config rustup nautilus-devel gobject-introspection
       - uses: actions/checkout@v4
+      - name: Trust the checked-out repository
+        # actions/checkout registers the workspace as a git safe directory in a
+        # global config it tears down again, and container jobs run the later
+        # steps as a different user than the one owning the checkout. Without
+        # this, the `git rev-parse --show-toplevel` at the top of every
+        # validation script fails with "dubious ownership" and exit code 128.
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -80,6 +87,13 @@ jobs:
           pacman -Syu --noconfirm
           pacman -S --noconfirm base-devel git pkgconf rustup nautilus gobject-introspection
       - uses: actions/checkout@v4
+      - name: Trust the checked-out repository
+        # actions/checkout registers the workspace as a git safe directory in a
+        # global config it tears down again, and container jobs run the later
+        # steps as a different user than the one owning the checkout. Without
+        # this, the `git rev-parse --show-toplevel` at the top of every
+        # validation script fails with "dubious ownership" and exit code 128.
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
